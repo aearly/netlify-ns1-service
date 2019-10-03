@@ -1,0 +1,71 @@
+openapi: 3.0.0
+info:
+  title: netlify-ns1-service
+
+servers:
+  - url: http://localhost:5000
+    description: local dev server
+
+paths:
+  /domains:
+    get:
+      summary: get a list of registered domains
+      operationId: getDomains
+      responses:
+        '200':
+          description: A list of domains.  Empty if none exist
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: string
+    put:
+      summary: create a new domain record
+      operationId: createDomain
+
+  /domains/{domain}:
+    get:
+      summary: get full info about a domain
+      operationId: getDomain
+      parameters:
+        - $ref: '#/components/parameters/domain'
+
+  /domains/{domain}/{record}/{recordType}:
+    get:
+      operationId: getRecord
+      summary: get full info about a domain record
+      parameters:
+        - $ref: '#/components/parameters/domain'
+        - $ref: '#/components/parameters/record'
+        - $ref: '#/components/parameters/recordType'
+    put:
+      summary: create a new domain record
+      operationId: createRecord
+      parameters:
+        - $ref: '#/components/parameters/domain'
+        - $ref: '#/components/parameters/record'
+        - $ref: '#/components/parameters/recordType'
+
+components:
+  schemas:
+
+  parameters:
+    domain:
+      name: domain
+      in: path
+      required: true
+      schema:
+        type: string
+    record:
+      name: record
+      in: path
+      required: true
+      schema:
+        type: string
+    recordType:
+      name: recordType
+      in: path
+      required: true
+      schema:
+        type: string
