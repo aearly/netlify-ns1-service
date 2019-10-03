@@ -6,5 +6,7 @@ oapi-scaffold: ${OAPI_SCAFFOLD}
 ${OAPI_SCAFFOLD}: service-oapi.yml
 	oapi-codegen service-oapi.yml > ${OAPI_SCAFFOLD}
 
+.PHONY: build
 build:
-	go build -o server
+	mkdir -p bin/
+	go build -o bin/server
