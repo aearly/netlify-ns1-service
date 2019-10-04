@@ -7,72 +7,83 @@ servers:
     description: local dev server
 
 paths:
-  /domains:
+  /zones:
     get:
-      summary: get a list of registered domains
-      operationId: getDomains
+      summary: get a list of registered zones
+      operationId: getZones
       responses:
         '200':
-          description: A list of domains.  Empty if none exist
+          description: A list of zones.  Empty if none exist
           content:
             application/json:
               schema:
                 type: array
                 items:
-                  $ref: '#/components/schemas/DomainObject'
-    put:
-      summary: create a new domain record
-      operationId: createDomain
-      requestBody:
-        schema:
-      responses:
-        "201":
-          description: domain created
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/DomainObject'
+                  $ref: '#/components/schemas/ZoneObject'
 
-  /domains/{domain}:
+  /zones/{zone}:
     get:
-      summary: get full info about a domain
-      operationId: getDomain
+      summary: get full info about a zone
+      operationId: getZone
       parameters:
-        - $ref: '#/components/parameters/domain'
+        - $ref: '#/components/parameters/zone'
       responses:
         "200":
-          description: OK, return domain info
+          description: OK, return zone info
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/DomainObject'
+                $ref: '#/components/schemas/ZoneObject'
         "404":
-          description: Domain info not found
+          description: Zone info not found
           content:
             application/json:
               schema:
                 type: object
+    put:
+      summary: create a new zone
+      operationId: createZone
+      parameters:
+        - $ref: '#/components/parameters/zone'
+      requestBody:
+        schema:
+          $ref: '#/components/schemas/ZoneObject'
+      responses:
+        "201":
+          description: zone created
+          content:
+            application/json:
+              schema:
+                type: object
+    delete:
+      summary: delete a zone
+      operationId: deleteZone
+      parameters:
+        - $ref: '#/components/parameters/zone'
+      responses:
+        "201":
+          description: zone deleted
 
 
-  /domains/{domain}/{record}/{recordType}:
+  /zones/{zone}/{domain}/{recordType}:
     get:
-      operationId: getRecord
+      operationId: getDomain
       summary: get full info about a domain record
       parameters:
+        - $ref: '#/components/parameters/zone'
         - $ref: '#/components/parameters/domain'
-        - $ref: '#/components/parameters/record'
         - $ref: '#/components/parameters/recordType'
     put:
       summary: create a new domain record
-      operationId: createRecord
+      operationId: createDomain
       parameters:
+        - $ref: '#/components/parameters/zone'
         - $ref: '#/components/parameters/domain'
-        - $ref: '#/components/parameters/record'
         - $ref: '#/components/parameters/recordType'
 
 components:
   schemas:
-    DomainObject:
+    ZoneObject:
       type: object
       required: ['zone']
       properties:
@@ -98,7 +109,7 @@ components:
         hostmaster:
           type: string
 
-    RecordObject:
+    DomainObject:
       type: object
       properties:
         id:
@@ -142,41 +153,15 @@ components:
         region:
           type: string
 
-# "id": "520519509f782d58bb4df419",
-#   "networks": [0],
-#   "type": "A",
-#   "tier": 3,
-#   "domain": "www.example.com",
-#   "zone": "example.com",
-#   "answers": [
-#     {
-#       "id": "520519509f782d58bb4df418",
-#       "feeds": [
-#         {
-#           "source": "a53252f9e583c6708331a1daeb172e12",
-#           "feed": "520533b89f782d5b1a10a851"
-#         }
-#       ],
-#       "answer": [
-#         "1.1.1.1"
-#       ],
-#       "meta": {
-#         "up": { feed: "520533b89f782d5b1a10a851" },
-#         "priority": 1
-#       },
-#       "region": "us-east"
-#     },
-
-
   parameters:
-    domain:
-      name: domain
+    zone:
+      name: zone
       in: path
       required: true
       schema:
         type: string
-    record:
-      name: record
+    domain:
+      name: domain
       in: path
       required: true
       schema:

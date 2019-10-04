@@ -34,6 +34,17 @@ type AnswerObject struct {
 
 // DomainObject defines model for DomainObject.
 type DomainObject struct {
+	Answers *[]AnswerObject         `json:"answers,omitempty"`
+	Domain  *string                 `json:"domain,omitempty"`
+	Id      *string                 `json:"id,omitempty"`
+	Meta    *map[string]interface{} `json:"meta,omitempty"`
+	Tier    *int                    `json:"tier,omitempty"`
+	Ttl     *int                    `json:"ttl,omitempty"`
+	Zone    *string                 `json:"zone,omitempty"`
+}
+
+// ZoneObject defines model for ZoneObject.
+type ZoneObject struct {
 	DnsServers *[]string               `json:"dns_servers,omitempty"`
 	Hostmaster *string                 `json:"hostmaster,omitempty"`
 	Id         *string                 `json:"id,omitempty"`
@@ -45,25 +56,14 @@ type DomainObject struct {
 	Zone       string                  `json:"zone"`
 }
 
-// RecordObject defines model for RecordObject.
-type RecordObject struct {
-	Answers *[]AnswerObject         `json:"answers,omitempty"`
-	Domain  *string                 `json:"domain,omitempty"`
-	Id      *string                 `json:"id,omitempty"`
-	Meta    *map[string]interface{} `json:"meta,omitempty"`
-	Tier    *int                    `json:"tier,omitempty"`
-	Ttl     *int                    `json:"ttl,omitempty"`
-	Zone    *string                 `json:"zone,omitempty"`
-}
-
 // Domain defines model for domain.
 type Domain string
 
-// Record defines model for record.
-type Record string
-
 // RecordType defines model for recordType.
 type RecordType string
+
+// Zone defines model for zone.
+type Zone string
 
 // RequestEditorFn  is the function signature for the RequestEditor callback function
 type RequestEditorFn func(req *http.Request, ctx context.Context) error
@@ -84,24 +84,27 @@ type Client struct {
 
 // The interface specification for the client above.
 type ClientInterface interface {
-	// GetDomains request
-	GetDomains(ctx context.Context) (*http.Response, error)
+	// GetZones request
+	GetZones(ctx context.Context) (*http.Response, error)
 
-	// CreateDomain request  with any body
-	CreateDomainWithBody(ctx context.Context, contentType string, body io.Reader) (*http.Response, error)
+	// DeleteZone request
+	DeleteZone(ctx context.Context, zone Zone) (*http.Response, error)
+
+	// GetZone request
+	GetZone(ctx context.Context, zone Zone) (*http.Response, error)
+
+	// CreateZone request  with any body
+	CreateZoneWithBody(ctx context.Context, zone Zone, contentType string, body io.Reader) (*http.Response, error)
 
 	// GetDomain request
-	GetDomain(ctx context.Context, domain Domain) (*http.Response, error)
+	GetDomain(ctx context.Context, zone Zone, domain Domain, recordType RecordType) (*http.Response, error)
 
-	// GetRecord request
-	GetRecord(ctx context.Context, domain Domain, record Record, recordType RecordType) (*http.Response, error)
-
-	// CreateRecord request
-	CreateRecord(ctx context.Context, domain Domain, record Record, recordType RecordType) (*http.Response, error)
+	// CreateDomain request
+	CreateDomain(ctx context.Context, zone Zone, domain Domain, recordType RecordType) (*http.Response, error)
 }
 
-func (c *Client) GetDomains(ctx context.Context) (*http.Response, error) {
-	req, err := NewGetDomainsRequest(c.Server)
+func (c *Client) GetZones(ctx context.Context) (*http.Response, error) {
+	req, err := NewGetZonesRequest(c.Server)
 	if err != nil {
 		return nil, err
 	}
@@ -115,8 +118,8 @@ func (c *Client) GetDomains(ctx context.Context) (*http.Response, error) {
 	return c.Client.Do(req)
 }
 
-func (c *Client) CreateDomainWithBody(ctx context.Context, contentType string, body io.Reader) (*http.Response, error) {
-	req, err := NewCreateDomainRequestWithBody(c.Server, contentType, body)
+func (c *Client) DeleteZone(ctx context.Context, zone Zone) (*http.Response, error) {
+	req, err := NewDeleteZoneRequest(c.Server, zone)
 	if err != nil {
 		return nil, err
 	}
@@ -130,8 +133,8 @@ func (c *Client) CreateDomainWithBody(ctx context.Context, contentType string, b
 	return c.Client.Do(req)
 }
 
-func (c *Client) GetDomain(ctx context.Context, domain Domain) (*http.Response, error) {
-	req, err := NewGetDomainRequest(c.Server, domain)
+func (c *Client) GetZone(ctx context.Context, zone Zone) (*http.Response, error) {
+	req, err := NewGetZoneRequest(c.Server, zone)
 	if err != nil {
 		return nil, err
 	}
@@ -145,8 +148,8 @@ func (c *Client) GetDomain(ctx context.Context, domain Domain) (*http.Response, 
 	return c.Client.Do(req)
 }
 
-func (c *Client) GetRecord(ctx context.Context, domain Domain, record Record, recordType RecordType) (*http.Response, error) {
-	req, err := NewGetRecordRequest(c.Server, domain, record, recordType)
+func (c *Client) CreateZoneWithBody(ctx context.Context, zone Zone, contentType string, body io.Reader) (*http.Response, error) {
+	req, err := NewCreateZoneRequestWithBody(c.Server, zone, contentType, body)
 	if err != nil {
 		return nil, err
 	}
@@ -160,8 +163,8 @@ func (c *Client) GetRecord(ctx context.Context, domain Domain, record Record, re
 	return c.Client.Do(req)
 }
 
-func (c *Client) CreateRecord(ctx context.Context, domain Domain, record Record, recordType RecordType) (*http.Response, error) {
-	req, err := NewCreateRecordRequest(c.Server, domain, record, recordType)
+func (c *Client) GetDomain(ctx context.Context, zone Zone, domain Domain, recordType RecordType) (*http.Response, error) {
+	req, err := NewGetDomainRequest(c.Server, zone, domain, recordType)
 	if err != nil {
 		return nil, err
 	}
@@ -175,11 +178,26 @@ func (c *Client) CreateRecord(ctx context.Context, domain Domain, record Record,
 	return c.Client.Do(req)
 }
 
-// NewGetDomainsRequest generates requests for GetDomains
-func NewGetDomainsRequest(server string) (*http.Request, error) {
+func (c *Client) CreateDomain(ctx context.Context, zone Zone, domain Domain, recordType RecordType) (*http.Response, error) {
+	req, err := NewCreateDomainRequest(c.Server, zone, domain, recordType)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if c.RequestEditor != nil {
+		err = c.RequestEditor(req, ctx)
+		if err != nil {
+			return nil, err
+		}
+	}
+	return c.Client.Do(req)
+}
+
+// NewGetZonesRequest generates requests for GetZones
+func NewGetZonesRequest(server string) (*http.Request, error) {
 	var err error
 
-	queryUrl := fmt.Sprintf("%s/domains", server)
+	queryUrl := fmt.Sprintf("%s/zones", server)
 
 	req, err := http.NewRequest("GET", queryUrl, nil)
 	if err != nil {
@@ -189,11 +207,60 @@ func NewGetDomainsRequest(server string) (*http.Request, error) {
 	return req, nil
 }
 
-// NewCreateDomainRequestWithBody generates requests for CreateDomain with any type of body
-func NewCreateDomainRequestWithBody(server string, contentType string, body io.Reader) (*http.Request, error) {
+// NewDeleteZoneRequest generates requests for DeleteZone
+func NewDeleteZoneRequest(server string, zone Zone) (*http.Request, error) {
 	var err error
 
-	queryUrl := fmt.Sprintf("%s/domains", server)
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParam("simple", false, "zone", zone)
+	if err != nil {
+		return nil, err
+	}
+
+	queryUrl := fmt.Sprintf("%s/zones/%s", server, pathParam0)
+
+	req, err := http.NewRequest("DELETE", queryUrl, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
+// NewGetZoneRequest generates requests for GetZone
+func NewGetZoneRequest(server string, zone Zone) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParam("simple", false, "zone", zone)
+	if err != nil {
+		return nil, err
+	}
+
+	queryUrl := fmt.Sprintf("%s/zones/%s", server, pathParam0)
+
+	req, err := http.NewRequest("GET", queryUrl, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
+// NewCreateZoneRequestWithBody generates requests for CreateZone with any type of body
+func NewCreateZoneRequestWithBody(server string, zone Zone, contentType string, body io.Reader) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParam("simple", false, "zone", zone)
+	if err != nil {
+		return nil, err
+	}
+
+	queryUrl := fmt.Sprintf("%s/zones/%s", server, pathParam0)
 
 	req, err := http.NewRequest("PUT", queryUrl, body)
 	if err != nil {
@@ -205,40 +272,19 @@ func NewCreateDomainRequestWithBody(server string, contentType string, body io.R
 }
 
 // NewGetDomainRequest generates requests for GetDomain
-func NewGetDomainRequest(server string, domain Domain) (*http.Request, error) {
+func NewGetDomainRequest(server string, zone Zone, domain Domain, recordType RecordType) (*http.Request, error) {
 	var err error
 
 	var pathParam0 string
 
-	pathParam0, err = runtime.StyleParam("simple", false, "domain", domain)
-	if err != nil {
-		return nil, err
-	}
-
-	queryUrl := fmt.Sprintf("%s/domains/%s", server, pathParam0)
-
-	req, err := http.NewRequest("GET", queryUrl, nil)
-	if err != nil {
-		return nil, err
-	}
-
-	return req, nil
-}
-
-// NewGetRecordRequest generates requests for GetRecord
-func NewGetRecordRequest(server string, domain Domain, record Record, recordType RecordType) (*http.Request, error) {
-	var err error
-
-	var pathParam0 string
-
-	pathParam0, err = runtime.StyleParam("simple", false, "domain", domain)
+	pathParam0, err = runtime.StyleParam("simple", false, "zone", zone)
 	if err != nil {
 		return nil, err
 	}
 
 	var pathParam1 string
 
-	pathParam1, err = runtime.StyleParam("simple", false, "record", record)
+	pathParam1, err = runtime.StyleParam("simple", false, "domain", domain)
 	if err != nil {
 		return nil, err
 	}
@@ -250,7 +296,7 @@ func NewGetRecordRequest(server string, domain Domain, record Record, recordType
 		return nil, err
 	}
 
-	queryUrl := fmt.Sprintf("%s/domains/%s/%s/%s", server, pathParam0, pathParam1, pathParam2)
+	queryUrl := fmt.Sprintf("%s/zones/%s/%s/%s", server, pathParam0, pathParam1, pathParam2)
 
 	req, err := http.NewRequest("GET", queryUrl, nil)
 	if err != nil {
@@ -260,20 +306,20 @@ func NewGetRecordRequest(server string, domain Domain, record Record, recordType
 	return req, nil
 }
 
-// NewCreateRecordRequest generates requests for CreateRecord
-func NewCreateRecordRequest(server string, domain Domain, record Record, recordType RecordType) (*http.Request, error) {
+// NewCreateDomainRequest generates requests for CreateDomain
+func NewCreateDomainRequest(server string, zone Zone, domain Domain, recordType RecordType) (*http.Request, error) {
 	var err error
 
 	var pathParam0 string
 
-	pathParam0, err = runtime.StyleParam("simple", false, "domain", domain)
+	pathParam0, err = runtime.StyleParam("simple", false, "zone", zone)
 	if err != nil {
 		return nil, err
 	}
 
 	var pathParam1 string
 
-	pathParam1, err = runtime.StyleParam("simple", false, "record", record)
+	pathParam1, err = runtime.StyleParam("simple", false, "domain", domain)
 	if err != nil {
 		return nil, err
 	}
@@ -285,7 +331,7 @@ func NewCreateRecordRequest(server string, domain Domain, record Record, recordT
 		return nil, err
 	}
 
-	queryUrl := fmt.Sprintf("%s/domains/%s/%s/%s", server, pathParam0, pathParam1, pathParam2)
+	queryUrl := fmt.Sprintf("%s/zones/%s/%s/%s", server, pathParam0, pathParam1, pathParam2)
 
 	req, err := http.NewRequest("PUT", queryUrl, nil)
 	if err != nil {
@@ -321,14 +367,14 @@ func NewClientWithResponsesAndRequestEditorFunc(server string, reqEditorFn Reque
 	}
 }
 
-type getDomainsResponse struct {
+type getZonesResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
-	JSON200      *[]DomainObject
+	JSON200      *[]ZoneObject
 }
 
 // Status returns HTTPResponse.Status
-func (r getDomainsResponse) Status() string {
+func (r getZonesResponse) Status() string {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.Status
 	}
@@ -336,21 +382,20 @@ func (r getDomainsResponse) Status() string {
 }
 
 // StatusCode returns HTTPResponse.StatusCode
-func (r getDomainsResponse) StatusCode() int {
+func (r getZonesResponse) StatusCode() int {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.StatusCode
 	}
 	return 0
 }
 
-type createDomainResponse struct {
+type deleteZoneResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
-	JSON201      *DomainObject
 }
 
 // Status returns HTTPResponse.Status
-func (r createDomainResponse) Status() string {
+func (r deleteZoneResponse) Status() string {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.Status
 	}
@@ -358,7 +403,52 @@ func (r createDomainResponse) Status() string {
 }
 
 // StatusCode returns HTTPResponse.StatusCode
-func (r createDomainResponse) StatusCode() int {
+func (r deleteZoneResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type getZoneResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *ZoneObject
+	JSON404      *map[string]interface{}
+}
+
+// Status returns HTTPResponse.Status
+func (r getZoneResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r getZoneResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type createZoneResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON201      *map[string]interface{}
+}
+
+// Status returns HTTPResponse.Status
+func (r createZoneResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r createZoneResponse) StatusCode() int {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.StatusCode
 	}
@@ -368,8 +458,6 @@ func (r createDomainResponse) StatusCode() int {
 type getDomainResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
-	JSON200      *DomainObject
-	JSON404      *map[string]interface{}
 }
 
 // Status returns HTTPResponse.Status
@@ -388,13 +476,13 @@ func (r getDomainResponse) StatusCode() int {
 	return 0
 }
 
-type getRecordResponse struct {
+type createDomainResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
 }
 
 // Status returns HTTPResponse.Status
-func (r getRecordResponse) Status() string {
+func (r createDomainResponse) Status() string {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.Status
 	}
@@ -402,95 +490,83 @@ func (r getRecordResponse) Status() string {
 }
 
 // StatusCode returns HTTPResponse.StatusCode
-func (r getRecordResponse) StatusCode() int {
+func (r createDomainResponse) StatusCode() int {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.StatusCode
 	}
 	return 0
 }
 
-type createRecordResponse struct {
-	Body         []byte
-	HTTPResponse *http.Response
-}
-
-// Status returns HTTPResponse.Status
-func (r createRecordResponse) Status() string {
-	if r.HTTPResponse != nil {
-		return r.HTTPResponse.Status
-	}
-	return http.StatusText(0)
-}
-
-// StatusCode returns HTTPResponse.StatusCode
-func (r createRecordResponse) StatusCode() int {
-	if r.HTTPResponse != nil {
-		return r.HTTPResponse.StatusCode
-	}
-	return 0
-}
-
-// GetDomainsWithResponse request returning *GetDomainsResponse
-func (c *ClientWithResponses) GetDomainsWithResponse(ctx context.Context) (*getDomainsResponse, error) {
-	rsp, err := c.GetDomains(ctx)
+// GetZonesWithResponse request returning *GetZonesResponse
+func (c *ClientWithResponses) GetZonesWithResponse(ctx context.Context) (*getZonesResponse, error) {
+	rsp, err := c.GetZones(ctx)
 	if err != nil {
 		return nil, err
 	}
-	return ParsegetDomainsResponse(rsp)
+	return ParsegetZonesResponse(rsp)
 }
 
-// CreateDomainWithBodyWithResponse request with arbitrary body returning *CreateDomainResponse
-func (c *ClientWithResponses) CreateDomainWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader) (*createDomainResponse, error) {
-	rsp, err := c.CreateDomainWithBody(ctx, contentType, body)
+// DeleteZoneWithResponse request returning *DeleteZoneResponse
+func (c *ClientWithResponses) DeleteZoneWithResponse(ctx context.Context, zone Zone) (*deleteZoneResponse, error) {
+	rsp, err := c.DeleteZone(ctx, zone)
 	if err != nil {
 		return nil, err
 	}
-	return ParsecreateDomainResponse(rsp)
+	return ParsedeleteZoneResponse(rsp)
+}
+
+// GetZoneWithResponse request returning *GetZoneResponse
+func (c *ClientWithResponses) GetZoneWithResponse(ctx context.Context, zone Zone) (*getZoneResponse, error) {
+	rsp, err := c.GetZone(ctx, zone)
+	if err != nil {
+		return nil, err
+	}
+	return ParsegetZoneResponse(rsp)
+}
+
+// CreateZoneWithBodyWithResponse request with arbitrary body returning *CreateZoneResponse
+func (c *ClientWithResponses) CreateZoneWithBodyWithResponse(ctx context.Context, zone Zone, contentType string, body io.Reader) (*createZoneResponse, error) {
+	rsp, err := c.CreateZoneWithBody(ctx, zone, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	return ParsecreateZoneResponse(rsp)
 }
 
 // GetDomainWithResponse request returning *GetDomainResponse
-func (c *ClientWithResponses) GetDomainWithResponse(ctx context.Context, domain Domain) (*getDomainResponse, error) {
-	rsp, err := c.GetDomain(ctx, domain)
+func (c *ClientWithResponses) GetDomainWithResponse(ctx context.Context, zone Zone, domain Domain, recordType RecordType) (*getDomainResponse, error) {
+	rsp, err := c.GetDomain(ctx, zone, domain, recordType)
 	if err != nil {
 		return nil, err
 	}
 	return ParsegetDomainResponse(rsp)
 }
 
-// GetRecordWithResponse request returning *GetRecordResponse
-func (c *ClientWithResponses) GetRecordWithResponse(ctx context.Context, domain Domain, record Record, recordType RecordType) (*getRecordResponse, error) {
-	rsp, err := c.GetRecord(ctx, domain, record, recordType)
+// CreateDomainWithResponse request returning *CreateDomainResponse
+func (c *ClientWithResponses) CreateDomainWithResponse(ctx context.Context, zone Zone, domain Domain, recordType RecordType) (*createDomainResponse, error) {
+	rsp, err := c.CreateDomain(ctx, zone, domain, recordType)
 	if err != nil {
 		return nil, err
 	}
-	return ParsegetRecordResponse(rsp)
+	return ParsecreateDomainResponse(rsp)
 }
 
-// CreateRecordWithResponse request returning *CreateRecordResponse
-func (c *ClientWithResponses) CreateRecordWithResponse(ctx context.Context, domain Domain, record Record, recordType RecordType) (*createRecordResponse, error) {
-	rsp, err := c.CreateRecord(ctx, domain, record, recordType)
-	if err != nil {
-		return nil, err
-	}
-	return ParsecreateRecordResponse(rsp)
-}
-
-// ParsegetDomainsResponse parses an HTTP response from a GetDomainsWithResponse call
-func ParsegetDomainsResponse(rsp *http.Response) (*getDomainsResponse, error) {
+// ParsegetZonesResponse parses an HTTP response from a GetZonesWithResponse call
+func ParsegetZonesResponse(rsp *http.Response) (*getZonesResponse, error) {
 	bodyBytes, err := ioutil.ReadAll(rsp.Body)
 	defer rsp.Body.Close()
 	if err != nil {
 		return nil, err
 	}
 
-	response := &getDomainsResponse{
+	response := &getZonesResponse{
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
 	}
 
 	switch {
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
-		response.JSON200 = &[]DomainObject{}
+		response.JSON200 = &[]ZoneObject{}
 		if err := json.Unmarshal(bodyBytes, response.JSON200); err != nil {
 			return nil, err
 		}
@@ -500,22 +576,72 @@ func ParsegetDomainsResponse(rsp *http.Response) (*getDomainsResponse, error) {
 	return response, nil
 }
 
-// ParsecreateDomainResponse parses an HTTP response from a CreateDomainWithResponse call
-func ParsecreateDomainResponse(rsp *http.Response) (*createDomainResponse, error) {
+// ParsedeleteZoneResponse parses an HTTP response from a DeleteZoneWithResponse call
+func ParsedeleteZoneResponse(rsp *http.Response) (*deleteZoneResponse, error) {
 	bodyBytes, err := ioutil.ReadAll(rsp.Body)
 	defer rsp.Body.Close()
 	if err != nil {
 		return nil, err
 	}
 
-	response := &createDomainResponse{
+	response := &deleteZoneResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	}
+
+	return response, nil
+}
+
+// ParsegetZoneResponse parses an HTTP response from a GetZoneWithResponse call
+func ParsegetZoneResponse(rsp *http.Response) (*getZoneResponse, error) {
+	bodyBytes, err := ioutil.ReadAll(rsp.Body)
+	defer rsp.Body.Close()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &getZoneResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		response.JSON200 = &ZoneObject{}
+		if err := json.Unmarshal(bodyBytes, response.JSON200); err != nil {
+			return nil, err
+		}
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
+		response.JSON404 = &map[string]interface{}{}
+		if err := json.Unmarshal(bodyBytes, response.JSON404); err != nil {
+			return nil, err
+		}
+
+	}
+
+	return response, nil
+}
+
+// ParsecreateZoneResponse parses an HTTP response from a CreateZoneWithResponse call
+func ParsecreateZoneResponse(rsp *http.Response) (*createZoneResponse, error) {
+	bodyBytes, err := ioutil.ReadAll(rsp.Body)
+	defer rsp.Body.Close()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &createZoneResponse{
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
 	}
 
 	switch {
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 201:
-		response.JSON201 = &DomainObject{}
+		response.JSON201 = &map[string]interface{}{}
 		if err := json.Unmarshal(bodyBytes, response.JSON201); err != nil {
 			return nil, err
 		}
@@ -539,51 +665,20 @@ func ParsegetDomainResponse(rsp *http.Response) (*getDomainResponse, error) {
 	}
 
 	switch {
-	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
-		response.JSON200 = &DomainObject{}
-		if err := json.Unmarshal(bodyBytes, response.JSON200); err != nil {
-			return nil, err
-		}
-
-	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
-		response.JSON404 = &map[string]interface{}{}
-		if err := json.Unmarshal(bodyBytes, response.JSON404); err != nil {
-			return nil, err
-		}
-
 	}
 
 	return response, nil
 }
 
-// ParsegetRecordResponse parses an HTTP response from a GetRecordWithResponse call
-func ParsegetRecordResponse(rsp *http.Response) (*getRecordResponse, error) {
+// ParsecreateDomainResponse parses an HTTP response from a CreateDomainWithResponse call
+func ParsecreateDomainResponse(rsp *http.Response) (*createDomainResponse, error) {
 	bodyBytes, err := ioutil.ReadAll(rsp.Body)
 	defer rsp.Body.Close()
 	if err != nil {
 		return nil, err
 	}
 
-	response := &getRecordResponse{
-		Body:         bodyBytes,
-		HTTPResponse: rsp,
-	}
-
-	switch {
-	}
-
-	return response, nil
-}
-
-// ParsecreateRecordResponse parses an HTTP response from a CreateRecordWithResponse call
-func ParsecreateRecordResponse(rsp *http.Response) (*createRecordResponse, error) {
-	bodyBytes, err := ioutil.ReadAll(rsp.Body)
-	defer rsp.Body.Close()
-	if err != nil {
-		return nil, err
-	}
-
-	response := &createRecordResponse{
+	response := &createDomainResponse{
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
 	}
@@ -596,16 +691,18 @@ func ParsecreateRecordResponse(rsp *http.Response) (*createRecordResponse, error
 
 // ServerInterface represents all server handlers.
 type ServerInterface interface {
-	// get a list of registered domains// (GET /domains)
-	GetDomains(ctx echo.Context) error
-	// create a new domain record// (PUT /domains)
-	CreateDomain(ctx echo.Context) error
-	// get full info about a domain// (GET /domains/{domain})
-	GetDomain(ctx echo.Context, domain Domain) error
-	// get full info about a domain record// (GET /domains/{domain}/{record}/{recordType})
-	GetRecord(ctx echo.Context, domain Domain, record Record, recordType RecordType) error
-	// create a new domain record// (PUT /domains/{domain}/{record}/{recordType})
-	CreateRecord(ctx echo.Context, domain Domain, record Record, recordType RecordType) error
+	// get a list of registered zones// (GET /zones)
+	GetZones(ctx echo.Context) error
+	// delete a zone// (DELETE /zones/{zone})
+	DeleteZone(ctx echo.Context, zone Zone) error
+	// get full info about a zone// (GET /zones/{zone})
+	GetZone(ctx echo.Context, zone Zone) error
+	// create a new zone// (PUT /zones/{zone})
+	CreateZone(ctx echo.Context, zone Zone) error
+	// get full info about a domain record// (GET /zones/{zone}/{domain}/{recordType})
+	GetDomain(ctx echo.Context, zone Zone, domain Domain, recordType RecordType) error
+	// create a new domain record// (PUT /zones/{zone}/{domain}/{recordType})
+	CreateDomain(ctx echo.Context, zone Zone, domain Domain, recordType RecordType) error
 }
 
 // ServerInterfaceWrapper converts echo contexts to parameters.
@@ -613,57 +710,80 @@ type ServerInterfaceWrapper struct {
 	Handler ServerInterface
 }
 
-// GetDomains converts echo context to params.
-func (w *ServerInterfaceWrapper) GetDomains(ctx echo.Context) error {
+// GetZones converts echo context to params.
+func (w *ServerInterfaceWrapper) GetZones(ctx echo.Context) error {
 	var err error
 
 	// Invoke the callback with all the unmarshalled arguments
-	err = w.Handler.GetDomains(ctx)
+	err = w.Handler.GetZones(ctx)
 	return err
 }
 
-// CreateDomain converts echo context to params.
-func (w *ServerInterfaceWrapper) CreateDomain(ctx echo.Context) error {
+// DeleteZone converts echo context to params.
+func (w *ServerInterfaceWrapper) DeleteZone(ctx echo.Context) error {
 	var err error
+	// ------------- Path parameter "zone" -------------
+	var zone Zone
+
+	err = runtime.BindStyledParameter("simple", false, "zone", ctx.Param("zone"), &zone)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter zone: %s", err))
+	}
 
 	// Invoke the callback with all the unmarshalled arguments
-	err = w.Handler.CreateDomain(ctx)
+	err = w.Handler.DeleteZone(ctx, zone)
+	return err
+}
+
+// GetZone converts echo context to params.
+func (w *ServerInterfaceWrapper) GetZone(ctx echo.Context) error {
+	var err error
+	// ------------- Path parameter "zone" -------------
+	var zone Zone
+
+	err = runtime.BindStyledParameter("simple", false, "zone", ctx.Param("zone"), &zone)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter zone: %s", err))
+	}
+
+	// Invoke the callback with all the unmarshalled arguments
+	err = w.Handler.GetZone(ctx, zone)
+	return err
+}
+
+// CreateZone converts echo context to params.
+func (w *ServerInterfaceWrapper) CreateZone(ctx echo.Context) error {
+	var err error
+	// ------------- Path parameter "zone" -------------
+	var zone Zone
+
+	err = runtime.BindStyledParameter("simple", false, "zone", ctx.Param("zone"), &zone)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter zone: %s", err))
+	}
+
+	// Invoke the callback with all the unmarshalled arguments
+	err = w.Handler.CreateZone(ctx, zone)
 	return err
 }
 
 // GetDomain converts echo context to params.
 func (w *ServerInterfaceWrapper) GetDomain(ctx echo.Context) error {
 	var err error
+	// ------------- Path parameter "zone" -------------
+	var zone Zone
+
+	err = runtime.BindStyledParameter("simple", false, "zone", ctx.Param("zone"), &zone)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter zone: %s", err))
+	}
+
 	// ------------- Path parameter "domain" -------------
 	var domain Domain
 
 	err = runtime.BindStyledParameter("simple", false, "domain", ctx.Param("domain"), &domain)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter domain: %s", err))
-	}
-
-	// Invoke the callback with all the unmarshalled arguments
-	err = w.Handler.GetDomain(ctx, domain)
-	return err
-}
-
-// GetRecord converts echo context to params.
-func (w *ServerInterfaceWrapper) GetRecord(ctx echo.Context) error {
-	var err error
-	// ------------- Path parameter "domain" -------------
-	var domain Domain
-
-	err = runtime.BindStyledParameter("simple", false, "domain", ctx.Param("domain"), &domain)
-	if err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter domain: %s", err))
-	}
-
-	// ------------- Path parameter "record" -------------
-	var record Record
-
-	err = runtime.BindStyledParameter("simple", false, "record", ctx.Param("record"), &record)
-	if err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter record: %s", err))
 	}
 
 	// ------------- Path parameter "recordType" -------------
@@ -675,27 +795,27 @@ func (w *ServerInterfaceWrapper) GetRecord(ctx echo.Context) error {
 	}
 
 	// Invoke the callback with all the unmarshalled arguments
-	err = w.Handler.GetRecord(ctx, domain, record, recordType)
+	err = w.Handler.GetDomain(ctx, zone, domain, recordType)
 	return err
 }
 
-// CreateRecord converts echo context to params.
-func (w *ServerInterfaceWrapper) CreateRecord(ctx echo.Context) error {
+// CreateDomain converts echo context to params.
+func (w *ServerInterfaceWrapper) CreateDomain(ctx echo.Context) error {
 	var err error
+	// ------------- Path parameter "zone" -------------
+	var zone Zone
+
+	err = runtime.BindStyledParameter("simple", false, "zone", ctx.Param("zone"), &zone)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter zone: %s", err))
+	}
+
 	// ------------- Path parameter "domain" -------------
 	var domain Domain
 
 	err = runtime.BindStyledParameter("simple", false, "domain", ctx.Param("domain"), &domain)
 	if err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter domain: %s", err))
-	}
-
-	// ------------- Path parameter "record" -------------
-	var record Record
-
-	err = runtime.BindStyledParameter("simple", false, "record", ctx.Param("record"), &record)
-	if err != nil {
-		return echo.NewHTTPError(http.StatusBadRequest, fmt.Sprintf("Invalid format for parameter record: %s", err))
 	}
 
 	// ------------- Path parameter "recordType" -------------
@@ -707,7 +827,7 @@ func (w *ServerInterfaceWrapper) CreateRecord(ctx echo.Context) error {
 	}
 
 	// Invoke the callback with all the unmarshalled arguments
-	err = w.Handler.CreateRecord(ctx, domain, record, recordType)
+	err = w.Handler.CreateDomain(ctx, zone, domain, recordType)
 	return err
 }
 
@@ -718,30 +838,31 @@ func RegisterHandlers(router runtime.EchoRouter, si ServerInterface) {
 		Handler: si,
 	}
 
-	router.GET("/domains", wrapper.GetDomains)
-	router.PUT("/domains", wrapper.CreateDomain)
-	router.GET("/domains/:domain", wrapper.GetDomain)
-	router.GET("/domains/:domain/:record/:recordType", wrapper.GetRecord)
-	router.PUT("/domains/:domain/:record/:recordType", wrapper.CreateRecord)
+	router.GET("/zones", wrapper.GetZones)
+	router.DELETE("/zones/:zone", wrapper.DeleteZone)
+	router.GET("/zones/:zone", wrapper.GetZone)
+	router.PUT("/zones/:zone", wrapper.CreateZone)
+	router.GET("/zones/:zone/:domain/:recordType", wrapper.GetDomain)
+	router.PUT("/zones/:zone/:domain/:recordType", wrapper.CreateDomain)
 
 }
 
 // Base64 encoded, gzipped, json marshaled Swagger object
 var swaggerSpec = []string{
 
-	"H4sIAAAAAAAC/9RWwW7bMAz9FYHb0a3dtdvBt2zpYRjWAt1uQVCoNp2osCVPottmgf99oGQ3SeOkSXva",
-	"IY4sPlHi4yOtJWSmqo1GTQ7SJdTSygoJrX/LTSWV5hE/oZY0hwi0rBDS3hiBxT+NsphDSrbBCFw2x0ry",
-	"KlrUjHRklZ5B2zI2Mzbf4bEzvsXjbz+/x6sHHOO57Y2eiZF2j2iv7+4xI8+TNTVaUuit0lv9/oSVG3AX",
-	"9RPSWrng9wIxd9uueHpwvTONzXCYg27GhOO1EahhHxXSeqwrvMWZMnrPuZeAuqkgncDVL4hgxL8RP79d",
-	"jX5ewjQ65FRjr5hdJOba3Tq0D532DmdybhxV0lHIwBb8WC6qp1uics2kNOEMbeCpsOjmu4xkF8OmzmGO",
-	"hWxKgvT8S5JEA7i/RuMumffCnQTUdIDgGy/1/SrdJPejxQJS+BCv2kDcyT7e0PwA76vu8G7OSW0kb5u5",
-	"Y6h64Z2nlC6MBysq2aaRSlUsTrQ7O2HNqYybA0vPlwHwBqZGLWsFKZyfJqcJRL6veNbiELofz9BTzURL",
-	"UkZ/zyHlyXEH4dS52mgXkvApSfgvM5pQ+5WyrkuV+bXxvQtVuGpLB2Vqo7C2MsUE5Ogyq2oK4Y1EqRwJ",
-	"U4gukFMhLquaFkIVQhuNAp+UI8+ma6pKsq45KCGfV3LL4JrDvHfCO9fNABuZRUk4Xv9eoKOvJl+sx6qb",
-	"smy32Do7iq3DSdomJUQhwmHzF7GHWSGFxscuXtF9rhjYCyJehkH7ujK8nlYf28nw4VeQbgtop+9U1Hs4",
-	"uv4RCYvUWN2T4CurjeAiuTjqFANFurnVeOVfaEOiMI3OBxRZNGUZUPLONKzQnqihvMTLkLXnAd8L9mbr",
-	"pr+UvC1b0avIXkaHIv1N5oUKuHYOJeZZt3ur9b8Me2+VsnL668VkCY0tIYU5UZ3GcWkyWfI9Iv2cJNzq",
-	"N7XozSLHBxE8QDtt/wUAAP//rPw+rDoLAAA=",
+	"H4sIAAAAAAAC/9RWy3LbOgz9FQ7uXSqR0qRdaOc2WXQ6TRbtyh5PhpEgmxmJVEgoievRv3dA2vVD8ivN",
+	"pgtbEgACPAeHjzlkpqqNRk0O0jnU0soKCa3/yk0lleY3/oda0hQi0LJCSJfOCCw+NcpiDinZBiNw2RQr",
+	"yaNoVnOkI6v0BNqWYzNj85/e3pt1LeC0zL+M3pXTu07J1i6dnoWBdi9o7x4eMSPPkTU1WlLovdJ7fWXC",
+	"yvWki5YGaa2c8XeBmLtuKjb3jnemsRn2415YTJheG4Hqz1EhrWNdxVucKKP3zHsOqJsK0hHc/oAIBvwb",
+	"8P+X28H3GxhHx8zq2qtlP4lug8X/LRaQwn/xSqHxoivxRkt6CF4Jt4PpVHpIhe4uHEoTTtB6D5X9jqUU",
+	"j6BlaDTuIiXX7t6hfd4m5qC8psZRJR1tTPztDFSv9zuhWiwsuukuJ9nZXu5yLGRTEqSXn5IkOonK1Woe",
+	"hahxh14OU7owPoGikn0aqVTF7Ey7izMmV2W8NTDHfhEAFzU1alkrSOHyPDlPIPL7iec+5lL+bYK+Zdww",
+	"ScrorzmkbBz6AJ6fq412IfhDkvAjM5pQ+3GyrkuV+ZHxowvrb7UhHbUI1rTTEQFDz9FlVtUUgA1EqRwJ",
+	"UwgP4VyIm6qmmVCF0EajwFflyDPrmqqS3DiGI+SfcbxRsKgwDyl8cCAknvOjDS0tkbBLTbAPw1a8fsyM",
+	"+lGuQnwJaMcdTi9CvXWUHCpCqXwLTLAKKUK6aG8H322Op/X92HZ323v3LRIWqbHa4xNe920EV8nVSTPo",
+	"WUKbhYbL7EIbEoVpdN6jmqIpyxAlH0xDa6zXTQ/rmUX59+J4atDRZ5PP3khqv8DejzrfmAB1m7NgFVJo",
+	"fFlQtb244nk41dp4vroktfu2ouvlDe0tjEYH4xaH7BGRa5e6rSWim7I8rJ1QSYQ0B0T0D4LeaP4WVi+T",
+	"5SVgNIfGlpDClKhO47g0mSz5tE8/JgmfU5t6826R47MIGaAdt78DAAD//6UgkKrxCwAA",
 }
 
 // GetSwagger returns the Swagger specification corresponding to the generated code
