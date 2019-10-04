@@ -11,6 +11,8 @@ paths:
   /zones:
     get:
       summary: get a list of registered zones
+      description: |
+        More info: <https://ns1.com/api#get-get-list-of-active-zones>
       operationId: getZones
       responses:
         '200':
@@ -26,6 +28,8 @@ paths:
     get:
       summary: get full info about a zone
       operationId: getZone
+      description: |
+        More info: <https://ns1.com/api#get-get-a-zones-details>
       parameters:
         - $ref: '#/components/parameters/zone'
       responses:
@@ -44,6 +48,8 @@ paths:
     put:
       summary: create a new zone
       operationId: createZone
+      description: |
+        More info: <https://ns1.com/api#put-create-a-new-dns-zone>
       parameters:
         - $ref: '#/components/parameters/zone'
       requestBody:
@@ -80,6 +86,8 @@ paths:
     delete:
       summary: delete a zone
       operationId: deleteZone
+      description: |
+        More info: <https://ns1.com/api#delete-delete-a-zone-and-all-its-records>
       parameters:
         - $ref: '#/components/parameters/zone'
       responses:
@@ -91,6 +99,8 @@ paths:
     get:
       operationId: getDomain
       summary: get full info about a domain record
+      description: |
+        More info: <https://ns1.com/api#getget-record-configuration-details>
       parameters:
         - $ref: '#/components/parameters/zone'
         - $ref: '#/components/parameters/domain'
@@ -111,6 +121,8 @@ paths:
     put:
       summary: create a new domain record
       operationId: createDomain
+      description: |
+        More info: <https://ns1.com/api#putcreate-a-new-dns-record>
       requestBody:
         content:
           application/json:
@@ -130,6 +142,8 @@ paths:
     post:
       summary: update a domain record with a new set of properties
       operationId: updateDomain
+      description: |
+        More info: <https://ns1.com/api#postupdate-record-configuration>
       requestBody:
         content:
           application/json:
@@ -149,6 +163,8 @@ paths:
     delete:
       summary: delete a domain record
       operationId: deleteDomain
+      description: |
+        More info: <https://ns1.com/api#deletedelete-a-record>
       parameters:
         - $ref: '#/components/parameters/zone'
         - $ref: '#/components/parameters/domain'
