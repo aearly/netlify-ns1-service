@@ -1,6 +1,7 @@
 openapi: 3.0.0
 info:
   title: netlify-ns1-service
+  version: 0.0.1
 
 servers:
   - url: http://localhost:5000
@@ -46,8 +47,10 @@ paths:
       parameters:
         - $ref: '#/components/parameters/zone'
       requestBody:
-        schema:
-          $ref: '#/components/schemas/ZoneObject'
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ZoneObject'
       responses:
         "201":
           description: zone created
@@ -55,6 +58,25 @@ paths:
             application/json:
               schema:
                 type: object
+    post:
+      summary: update an exisiting zone with a new set of properties
+      description: |
+        More info: <https://ns1.com/api#post-modify-a-zone>
+      operationId: updateZone
+      parameters:
+        - $ref: '#/components/parameters/zone'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ZoneObject'
+      responses:
+        "200":
+          description: zone updated
+          content:
+            application/json:
+              schema:
+              $ref: '#/components/schemas/ZoneObject'
     delete:
       summary: delete a zone
       operationId: deleteZone
@@ -90,12 +112,50 @@ paths:
       summary: create a new domain record
       operationId: createDomain
       requestBody:
-        schema:
-          $ref: '#/components/schemas/ZoneObject'
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Record'
       parameters:
         - $ref: '#/components/parameters/zone'
         - $ref: '#/components/parameters/domain'
         - $ref: '#/components/parameters/recordType'
+      responses:
+        "201":
+          description: record created
+          content:
+            application/json:
+              schema:
+                type: object
+    post:
+      summary: update a domain record with a new set of properties
+      operationId: updateDomain
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Record'
+      parameters:
+        - $ref: '#/components/parameters/zone'
+        - $ref: '#/components/parameters/domain'
+        - $ref: '#/components/parameters/recordType'
+      responses:
+        "200":
+          description: record updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Record'
+    delete:
+      summary: delete a domain record
+      operationId: deleteDomain
+      parameters:
+        - $ref: '#/components/parameters/zone'
+        - $ref: '#/components/parameters/domain'
+        - $ref: '#/components/parameters/recordType'
+      responses:
+        "204":
+          description: zone deleted
 
 components:
   schemas:
@@ -193,7 +253,6 @@ components:
         link:
           type: string
         meta:
-          "$schema": http://json-schema.org/draft-04/schema#
           "$ref": "#/components/schemas/Meta"
         network_pools:
           items:
@@ -208,11 +267,9 @@ components:
         pool:
           type: string
         primary:
-          "$schema": http://json-schema.org/draft-04/schema#
           "$ref": "#/components/schemas/ZonePrimary"
         records:
           items:
-            "$schema": http://json-schema.org/draft-04/schema#
             "$ref": "#/components/schemas/ZoneRecord"
           type: array
         refresh:
@@ -220,7 +277,6 @@ components:
         retry:
           type: integer
         secondary:
-          "$schema": http://json-schema.org/draft-04/schema#
           "$ref": "#/components/schemas/ZoneSecondary"
         serial:
           type: integer
@@ -239,7 +295,6 @@ components:
           type: boolean
         secondaries:
           items:
-            "$schema": http://json-schema.org/draft-04/schema#
             "$ref": "#/components/schemas/ZoneSecondaryServer"
           type: array
       additionalProperties: false
@@ -292,7 +347,6 @@ components:
         status:
           type: string
         tsig:
-          "$schema": http://json-schema.org/draft-04/schema#
           "$ref": "#/components/schemas/TSIG"
       additionalProperties: false
       type: object
@@ -348,64 +402,6 @@ components:
           type: string
       additionalProperties: false
       type: object
-    Meta:
-      properties:
-        asn:
-          additionalProperties: true
-          type: object
-        ca_province:
-          additionalProperties: true
-          type: object
-        connections:
-          additionalProperties: true
-          type: object
-        country:
-          additionalProperties: true
-          type: object
-        georegion:
-          additionalProperties: true
-          type: object
-        high_watermark:
-          additionalProperties: true
-          type: object
-        ip_prefixes:
-          additionalProperties: true
-          type: object
-        latitude:
-          additionalProperties: true
-          type: object
-        loadavg:
-          additionalProperties: true
-          type: object
-        longitude:
-          additionalProperties: true
-          type: object
-        low_watermark:
-          additionalProperties: true
-          type: object
-        note:
-          additionalProperties: true
-          type: object
-        priority:
-          additionalProperties: true
-          type: object
-        pulsar:
-          additionalProperties: true
-          type: object
-        requests:
-          additionalProperties: true
-          type: object
-        up:
-          additionalProperties: true
-          type: object
-        us_state:
-          additionalProperties: true
-          type: object
-        weight:
-          additionalProperties: true
-          type: object
-      additionalProperties: false
-      type: object
     Record:
       required:
       - zone
@@ -416,14 +412,12 @@ components:
       properties:
         answers:
           items:
-            "$schema": http://json-schema.org/draft-04/schema#
             "$ref": "#/components/schemas/Answer"
           type: array
         domain:
           type: string
         filters:
           items:
-            "$schema": http://json-schema.org/draft-04/schema#
             "$ref": "#/components/schemas/Filter"
           type: array
         id:
@@ -431,12 +425,10 @@ components:
         link:
           type: string
         meta:
-          "$schema": http://json-schema.org/draft-04/schema#
           "$ref": "#/components/schemas/Meta"
         regions:
           # patternProperties:
           #   ".*":
-          #     "$schema": http://json-schema.org/draft-04/schema#
           #     "$ref": "#/components/schemas/Region"
           type: object
         ttl:

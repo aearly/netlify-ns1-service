@@ -82,6 +82,28 @@ func (h Handlers) GetZone(ctx echo.Context, zoneName Zone) error {
 	return ctx.JSON(http.StatusOK, zone)
 }
 
+// update a zone.  properties will be merged with the exisiting zone// (POST /zones/{zone})
+func (h Handlers) UpdateZone(ctx echo.Context, zoneName Zone) error {
+	client := ctx.(*CustomContext).Ns1Client
+
+	zone := new(dns.Zone)
+
+	if err := ctx.Bind(zone); err != nil {
+		return ctx.JSON(http.StatusBadRequest, ErrorMessage{Message: err.Error()})
+	}
+
+	_, err := client.Zones.Update(zone)
+	if err != nil {
+		return ctx.JSON(http.StatusInternalServerError, ErrorMessage{Message: err.Error()})
+	}
+	zone, res, err := client.Zones.Get(string(zoneName))
+	if err != nill {
+		return err
+	}
+
+	return ctx.JSON(http.StatusOK, zone)
+}
+
 // get full info about a domain record// (GET /zones/{zone}/{domain}/{recordType})
 func (h Handlers) GetDomain(ctx echo.Context, zoneName Zone, domain Domain, recordType RecordType) error {
 	client := ctx.(*CustomContext).Ns1Client
@@ -119,4 +141,46 @@ func (h Handlers) CreateDomain(ctx echo.Context, zoneName Zone, domain Domain, r
 		return ctx.JSON(http.StatusInternalServerError, ErrorMessage{Message: err.Error()})
 	}
 	return ctx.JSON(http.StatusCreated, struct{}{})
+}
+
+// update a domain record// (POST /zones/{zone}/{domain}/{recordType})
+func (h Handlers) UpdateDomain(ctx echo.Context, zoneName Zone, domain Domain, recordType RecordType) error {
+	client := ctx.(*CustomContext).Ns1Client
+
+	record := new(dns.Record)
+	record.Zone = string(zoneName)
+	record.Domain = string(domain)
+	record.Type = string(recordType)
+	if record.Filters == nil {
+		record.Filters = []*filter.Filter{}
+	}
+
+	if err := ctx.Bind(record); err != nil {
+		return ctx.JSON(http.StatusBadRequest, ErrorMessage{Message: err.Error()})
+	}
+
+	out, _ := json.Marshal(record)
+	fmt.Println(string(out))
+
+	_, err := client.Records.Update(record)
+	if err != nil {
+		return ctx.JSON(http.StatusInternalServerError, ErrorMessage{Message: err.Error()})
+	}
+
+	record, _, err = client.Records.Get(string(zoneName), string(domain), string(recordType))
+	if err != nil {
+		return err
+	}
+	return ctx.JSON(http.StatusOK, record)
+}
+
+// delete a domain record// (DELETE /zones/{zone}/{domain}/{recordType})
+func (h Handlers) DeleteDomain(ctx echo.Context, zoneName Zone, domain Domain, recordType RecordType) error {
+	client := ctx.(*CustomContext).Ns1Client
+
+	_, err := client.Records.Delete(string(zoneName), string(domain), string(recordType))
+	if err != nil {
+		return ctx.JSON(http.StatusInternalServerError, ErrorMessage{Message: err.Error()})
+	}
+	return ctx.String(http.StatusNoContent, "")
 }
