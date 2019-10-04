@@ -9,4 +9,4 @@ ${OAPI_SCAFFOLD}: service-oapi.yml
 .PHONY: build
 build:
 	mkdir -p bin/
-	go build -o bin/server
+	go build -o bin/netlify-ns1-service

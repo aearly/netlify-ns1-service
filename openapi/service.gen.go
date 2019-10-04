@@ -13,10 +13,48 @@ import (
 	"github.com/deepmap/oapi-codegen/pkg/runtime"
 	"github.com/getkin/kin-openapi/openapi3"
 	"github.com/labstack/echo/v4"
+	"io"
 	"io/ioutil"
 	"net/http"
 	"strings"
 )
+
+// AnswerObject defines model for AnswerObject.
+type AnswerObject struct {
+	Answer *[]string `json:"answer,omitempty"`
+	Feeds  *struct {
+		Feed   *string `json:"feed,omitempty"`
+		Source *string `json:"source,omitempty"`
+	} `json:"feeds,omitempty"`
+	Id     *string                 `json:"id,omitempty"`
+	Meta   *map[string]interface{} `json:"meta,omitempty"`
+	Region *string                 `json:"region,omitempty"`
+	Type   *string                 `json:"type,omitempty"`
+}
+
+// DomainObject defines model for DomainObject.
+type DomainObject struct {
+	DnsServers *[]string               `json:"dns_servers,omitempty"`
+	Hostmaster *string                 `json:"hostmaster,omitempty"`
+	Id         *string                 `json:"id,omitempty"`
+	Meta       *map[string]interface{} `json:"meta,omitempty"`
+	MxTtl      *int                    `json:"mx_ttl,omitempty"`
+	Refresh    *int                    `json:"refresh,omitempty"`
+	Retry      *int                    `json:"retry,omitempty"`
+	Ttl        *int                    `json:"ttl,omitempty"`
+	Zone       string                  `json:"zone"`
+}
+
+// RecordObject defines model for RecordObject.
+type RecordObject struct {
+	Answers *[]AnswerObject         `json:"answers,omitempty"`
+	Domain  *string                 `json:"domain,omitempty"`
+	Id      *string                 `json:"id,omitempty"`
+	Meta    *map[string]interface{} `json:"meta,omitempty"`
+	Tier    *int                    `json:"tier,omitempty"`
+	Ttl     *int                    `json:"ttl,omitempty"`
+	Zone    *string                 `json:"zone,omitempty"`
+}
 
 // Domain defines model for domain.
 type Domain string
@@ -49,8 +87,8 @@ type ClientInterface interface {
 	// GetDomains request
 	GetDomains(ctx context.Context) (*http.Response, error)
 
-	// CreateDomain request
-	CreateDomain(ctx context.Context) (*http.Response, error)
+	// CreateDomain request  with any body
+	CreateDomainWithBody(ctx context.Context, contentType string, body io.Reader) (*http.Response, error)
 
 	// GetDomain request
 	GetDomain(ctx context.Context, domain Domain) (*http.Response, error)
@@ -77,8 +115,8 @@ func (c *Client) GetDomains(ctx context.Context) (*http.Response, error) {
 	return c.Client.Do(req)
 }
 
-func (c *Client) CreateDomain(ctx context.Context) (*http.Response, error) {
-	req, err := NewCreateDomainRequest(c.Server)
+func (c *Client) CreateDomainWithBody(ctx context.Context, contentType string, body io.Reader) (*http.Response, error) {
+	req, err := NewCreateDomainRequestWithBody(c.Server, contentType, body)
 	if err != nil {
 		return nil, err
 	}
@@ -151,17 +189,18 @@ func NewGetDomainsRequest(server string) (*http.Request, error) {
 	return req, nil
 }
 
-// NewCreateDomainRequest generates requests for CreateDomain
-func NewCreateDomainRequest(server string) (*http.Request, error) {
+// NewCreateDomainRequestWithBody generates requests for CreateDomain with any type of body
+func NewCreateDomainRequestWithBody(server string, contentType string, body io.Reader) (*http.Request, error) {
 	var err error
 
 	queryUrl := fmt.Sprintf("%s/domains", server)
 
-	req, err := http.NewRequest("PUT", queryUrl, nil)
+	req, err := http.NewRequest("PUT", queryUrl, body)
 	if err != nil {
 		return nil, err
 	}
 
+	req.Header.Add("Content-Type", contentType)
 	return req, nil
 }
 
@@ -285,7 +324,7 @@ func NewClientWithResponsesAndRequestEditorFunc(server string, reqEditorFn Reque
 type getDomainsResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
-	JSON200      *[]string
+	JSON200      *[]DomainObject
 }
 
 // Status returns HTTPResponse.Status
@@ -307,6 +346,7 @@ func (r getDomainsResponse) StatusCode() int {
 type createDomainResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
+	JSON201      *DomainObject
 }
 
 // Status returns HTTPResponse.Status
@@ -328,6 +368,8 @@ func (r createDomainResponse) StatusCode() int {
 type getDomainResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
+	JSON200      *DomainObject
+	JSON404      *map[string]interface{}
 }
 
 // Status returns HTTPResponse.Status
@@ -397,9 +439,9 @@ func (c *ClientWithResponses) GetDomainsWithResponse(ctx context.Context) (*getD
 	return ParsegetDomainsResponse(rsp)
 }
 
-// CreateDomainWithResponse request returning *CreateDomainResponse
-func (c *ClientWithResponses) CreateDomainWithResponse(ctx context.Context) (*createDomainResponse, error) {
-	rsp, err := c.CreateDomain(ctx)
+// CreateDomainWithBodyWithResponse request with arbitrary body returning *CreateDomainResponse
+func (c *ClientWithResponses) CreateDomainWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader) (*createDomainResponse, error) {
+	rsp, err := c.CreateDomainWithBody(ctx, contentType, body)
 	if err != nil {
 		return nil, err
 	}
@@ -448,7 +490,7 @@ func ParsegetDomainsResponse(rsp *http.Response) (*getDomainsResponse, error) {
 
 	switch {
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
-		response.JSON200 = &[]string{}
+		response.JSON200 = &[]DomainObject{}
 		if err := json.Unmarshal(bodyBytes, response.JSON200); err != nil {
 			return nil, err
 		}
@@ -472,6 +514,12 @@ func ParsecreateDomainResponse(rsp *http.Response) (*createDomainResponse, error
 	}
 
 	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 201:
+		response.JSON201 = &DomainObject{}
+		if err := json.Unmarshal(bodyBytes, response.JSON201); err != nil {
+			return nil, err
+		}
+
 	}
 
 	return response, nil
@@ -491,6 +539,18 @@ func ParsegetDomainResponse(rsp *http.Response) (*getDomainResponse, error) {
 	}
 
 	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		response.JSON200 = &DomainObject{}
+		if err := json.Unmarshal(bodyBytes, response.JSON200); err != nil {
+			return nil, err
+		}
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
+		response.JSON404 = &map[string]interface{}{}
+		if err := json.Unmarshal(bodyBytes, response.JSON404); err != nil {
+			return nil, err
+		}
+
 	}
 
 	return response, nil
@@ -669,14 +729,19 @@ func RegisterHandlers(router runtime.EchoRouter, si ServerInterface) {
 // Base64 encoded, gzipped, json marshaled Swagger object
 var swaggerSpec = []string{
 
-	"H4sIAAAAAAAC/9RUwY7UMAz9lchw7E4LiEtuSMuBK+KG9hBadyYoTYLjDoyq/jty2kxBGrqwnPYyySTP",
-	"znvPdidowxCDR88J9ATRkBmQkfK/LgzGetnJL0TDJ6jAmwFBl8sKCL+NlrADzTRiBak94WAkii9RkInJ",
-	"+iPMs2DbQN0fMq6XT8n4KZ/vZM2Af8k8l8sE2o/OzRVY34cMtewE65Gd7S93Pr26S0hn28oTZ6Rkg/CA",
-	"uYIQ0ZtoQcObQ3NooMrssrv14mDeH5FlCRHJsA3+QwdaDu9XiDBPMfiEGf66aWRpg2f0OdLE6GybY+uv",
-	"KeSibeIs45BuqKzKgSEyl0V1h6klG3nR8E45m1iFXq1sD0q9HyJflO2VDx4V/rCJcynSOAyGLgtzZa6R",
-	"hEebGAm7kkRejuMNyS2hYbzfWusqWmrw6xMLUhnl8fuaVq0NJFyKufW0bObHXc612dr/8wQvCXvQ8KLe",
-	"hqTeIOsTMD/sEhUv+tE5Je2jzJcwijcl9hbVelqEXDfSvLsCPpbJeZqA6lFkcfZvkXnc/sOYayl3++RZ",
-	"yt5tXJkipHMRMpIDDSfmqOvahda4U0is3zaNfEl+n9R8rTo8qyUDzA/zzwAAAP//u3KSUt8FAAA=",
+	"H4sIAAAAAAAC/9RWwW7bMAz9FYHb0a3dtdvBt2zpYRjWAt1uQVCoNp2osCVPottmgf99oGQ3SeOkSXva",
+	"IY4sPlHi4yOtJWSmqo1GTQ7SJdTSygoJrX/LTSWV5hE/oZY0hwi0rBDS3hiBxT+NsphDSrbBCFw2x0ry",
+	"KlrUjHRklZ5B2zI2Mzbf4bEzvsXjbz+/x6sHHOO57Y2eiZF2j2iv7+4xI8+TNTVaUuit0lv9/oSVG3AX",
+	"9RPSWrng9wIxd9uueHpwvTONzXCYg27GhOO1EahhHxXSeqwrvMWZMnrPuZeAuqkgncDVL4hgxL8RP79d",
+	"jX5ewjQ65FRjr5hdJOba3Tq0D532DmdybhxV0lHIwBb8WC6qp1uics2kNOEMbeCpsOjmu4xkF8OmzmGO",
+	"hWxKgvT8S5JEA7i/RuMumffCnQTUdIDgGy/1/SrdJPejxQJS+BCv2kDcyT7e0PwA76vu8G7OSW0kb5u5",
+	"Y6h64Z2nlC6MBysq2aaRSlUsTrQ7O2HNqYybA0vPlwHwBqZGLWsFKZyfJqcJRL6veNbiELofz9BTzURL",
+	"UkZ/zyHlyXEH4dS52mgXkvApSfgvM5pQ+5WyrkuV+bXxvQtVuGpLB2Vqo7C2MsUE5Ogyq2oK4Y1EqRwJ",
+	"U4gukFMhLquaFkIVQhuNAp+UI8+ma6pKsq45KCGfV3LL4JrDvHfCO9fNABuZRUk4Xv9eoKOvJl+sx6qb",
+	"smy32Do7iq3DSdomJUQhwmHzF7GHWSGFxscuXtF9rhjYCyJehkH7ujK8nlYf28nw4VeQbgtop+9U1Hs4",
+	"uv4RCYvUWN2T4CurjeAiuTjqFANFurnVeOVfaEOiMI3OBxRZNGUZUPLONKzQnqihvMTLkLXnAd8L9mbr",
+	"pr+UvC1b0avIXkaHIv1N5oUKuHYOJeZZt3ur9b8Me2+VsnL668VkCY0tIYU5UZ3GcWkyWfI9Iv2cJNzq",
+	"N7XozSLHBxE8QDtt/wUAAP//rPw+rDoLAAA=",
 }
 
 // GetSwagger returns the Swagger specification corresponding to the generated code

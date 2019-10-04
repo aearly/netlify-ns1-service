@@ -3,13 +3,21 @@ package main
 import (
 	. "github.com/aearly/netlify-ns1-service/openapi"
 	"github.com/labstack/echo/v4"
+	"net/http"
 )
 
-type Handlers struct{}
+type Handlers struct {
+	apiKey string
+}
 
 // get a list of registered domains// (GET /domains)
 func (h Handlers) GetDomains(ctx echo.Context) error {
-	return nil
+	client := ctx.(*CustomContext).Ns1Client
+	zones, _, err := client.Zones.List()
+	if err != nil {
+		return err
+	}
+	return ctx.JSON(http.StatusOK, zones)
 }
 
 // create a new domain record// (PUT /domains)

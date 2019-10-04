@@ -19,10 +19,19 @@ paths:
               schema:
                 type: array
                 items:
-                  type: string
+                  $ref: '#/components/schemas/DomainObject'
     put:
       summary: create a new domain record
       operationId: createDomain
+      requestBody:
+        schema:
+      responses:
+        "201":
+          description: domain created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DomainObject'
 
   /domains/{domain}:
     get:
@@ -30,6 +39,20 @@ paths:
       operationId: getDomain
       parameters:
         - $ref: '#/components/parameters/domain'
+      responses:
+        "200":
+          description: OK, return domain info
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DomainObject'
+        "404":
+          description: Domain info not found
+          content:
+            application/json:
+              schema:
+                type: object
+
 
   /domains/{domain}/{record}/{recordType}:
     get:
@@ -49,6 +72,101 @@ paths:
 
 components:
   schemas:
+    DomainObject:
+      type: object
+      required: ['zone']
+      properties:
+        id:
+          type: string
+        ttl:
+          type: integer
+          default: 3600
+        mx_ttl:
+          type: integer
+        retry:
+          type: integer
+        zone:
+          type: string
+        refresh:
+          type: integer
+        dns_servers:
+          type: array
+          items:
+            type: string
+        meta:
+          type: object
+        hostmaster:
+          type: string
+
+    RecordObject:
+      type: object
+      properties:
+        id:
+          type: string
+        tier:
+          type: integer
+        domain:
+          type: string
+        zone:
+          type: string
+        meta:
+          type: object
+        ttl:
+          type: integer
+        answers:
+          type: array
+          items:
+            $ref: '#/components/schemas/AnswerObject'
+
+    AnswerObject:
+      type: object
+      properties:
+        id:
+          type: string
+        type:
+          type: string
+          enum: ["NS", "A", "AAA", "CNAME"]
+        feeds:
+          type: object
+          properties:
+            source:
+              type: string
+            feed:
+              type: string
+        answer:
+          type: array
+          items:
+            type: string
+        meta:
+          type: object
+        region:
+          type: string
+
+# "id": "520519509f782d58bb4df419",
+#   "networks": [0],
+#   "type": "A",
+#   "tier": 3,
+#   "domain": "www.example.com",
+#   "zone": "example.com",
+#   "answers": [
+#     {
+#       "id": "520519509f782d58bb4df418",
+#       "feeds": [
+#         {
+#           "source": "a53252f9e583c6708331a1daeb172e12",
+#           "feed": "520533b89f782d5b1a10a851"
+#         }
+#       ],
+#       "answer": [
+#         "1.1.1.1"
+#       ],
+#       "meta": {
+#         "up": { feed: "520533b89f782d5b1a10a851" },
+#         "priority": 1
+#       },
+#       "region": "us-east"
+#     },
+
 
   parameters:
     domain:
