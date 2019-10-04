@@ -13,47 +13,233 @@ import (
 	"github.com/deepmap/oapi-codegen/pkg/runtime"
 	"github.com/getkin/kin-openapi/openapi3"
 	"github.com/labstack/echo/v4"
+	"github.com/pkg/errors"
 	"io"
 	"io/ioutil"
 	"net/http"
 	"strings"
 )
 
-// AnswerObject defines model for AnswerObject.
-type AnswerObject struct {
-	Answer *[]string `json:"answer,omitempty"`
-	Feeds  *struct {
-		Feed   *string `json:"feed,omitempty"`
-		Source *string `json:"source,omitempty"`
-	} `json:"feeds,omitempty"`
-	Id     *string                 `json:"id,omitempty"`
-	Meta   *map[string]interface{} `json:"meta,omitempty"`
-	Region *string                 `json:"region,omitempty"`
-	Type   *string                 `json:"type,omitempty"`
+// Answer defines model for Answer.
+type Answer struct {
+	Answer []string `json:"answer"`
+	Id     *string  `json:"id,omitempty"`
+	Meta   *Meta    `json:"meta,omitempty"`
+	Region *string  `json:"region,omitempty"`
 }
 
-// DomainObject defines model for DomainObject.
-type DomainObject struct {
-	Answers *[]AnswerObject         `json:"answers,omitempty"`
-	Domain  *string                 `json:"domain,omitempty"`
-	Id      *string                 `json:"id,omitempty"`
-	Meta    *map[string]interface{} `json:"meta,omitempty"`
-	Tier    *int                    `json:"tier,omitempty"`
-	Ttl     *int                    `json:"ttl,omitempty"`
-	Zone    *string                 `json:"zone,omitempty"`
+// Error defines model for Error.
+type Error struct {
+	Message *string `json:"message,omitempty"`
+}
+
+// Filter defines model for Filter.
+type Filter struct {
+	Config   map[string]interface{} `json:"config"`
+	Disabled *bool                  `json:"disabled,omitempty"`
+	Filter   string                 `json:"filter"`
+}
+
+// Meta defines model for Meta.
+type Meta struct {
+	Asn           *Meta_Asn           `json:"asn,omitempty"`
+	CaProvince    *Meta_CaProvince    `json:"ca_province,omitempty"`
+	Connections   *Meta_Connections   `json:"connections,omitempty"`
+	Country       *Meta_Country       `json:"country,omitempty"`
+	Georegion     *Meta_Georegion     `json:"georegion,omitempty"`
+	HighWatermark *Meta_HighWatermark `json:"high_watermark,omitempty"`
+	IpPrefixes    *Meta_IpPrefixes    `json:"ip_prefixes,omitempty"`
+	Latitude      *Meta_Latitude      `json:"latitude,omitempty"`
+	Loadavg       *Meta_Loadavg       `json:"loadavg,omitempty"`
+	Longitude     *Meta_Longitude     `json:"longitude,omitempty"`
+	LowWatermark  *Meta_LowWatermark  `json:"low_watermark,omitempty"`
+	Note          *Meta_Note          `json:"note,omitempty"`
+	Priority      *Meta_Priority      `json:"priority,omitempty"`
+	Pulsar        *Meta_Pulsar        `json:"pulsar,omitempty"`
+	Requests      *Meta_Requests      `json:"requests,omitempty"`
+	Up            *Meta_Up            `json:"up,omitempty"`
+	UsState       *Meta_UsState       `json:"us_state,omitempty"`
+	Weight        *Meta_Weight        `json:"weight,omitempty"`
+}
+
+// Meta_Asn defines model for Meta.Asn.
+type Meta_Asn struct {
+	AdditionalProperties map[string]interface{} `json:"-"`
+}
+
+// Meta_CaProvince defines model for Meta.CaProvince.
+type Meta_CaProvince struct {
+	AdditionalProperties map[string]interface{} `json:"-"`
+}
+
+// Meta_Connections defines model for Meta.Connections.
+type Meta_Connections struct {
+	AdditionalProperties map[string]interface{} `json:"-"`
+}
+
+// Meta_Country defines model for Meta.Country.
+type Meta_Country struct {
+	AdditionalProperties map[string]interface{} `json:"-"`
+}
+
+// Meta_Georegion defines model for Meta.Georegion.
+type Meta_Georegion struct {
+	AdditionalProperties map[string]interface{} `json:"-"`
+}
+
+// Meta_HighWatermark defines model for Meta.HighWatermark.
+type Meta_HighWatermark struct {
+	AdditionalProperties map[string]interface{} `json:"-"`
+}
+
+// Meta_IpPrefixes defines model for Meta.IpPrefixes.
+type Meta_IpPrefixes struct {
+	AdditionalProperties map[string]interface{} `json:"-"`
+}
+
+// Meta_Latitude defines model for Meta.Latitude.
+type Meta_Latitude struct {
+	AdditionalProperties map[string]interface{} `json:"-"`
+}
+
+// Meta_Loadavg defines model for Meta.Loadavg.
+type Meta_Loadavg struct {
+	AdditionalProperties map[string]interface{} `json:"-"`
+}
+
+// Meta_Longitude defines model for Meta.Longitude.
+type Meta_Longitude struct {
+	AdditionalProperties map[string]interface{} `json:"-"`
+}
+
+// Meta_LowWatermark defines model for Meta.LowWatermark.
+type Meta_LowWatermark struct {
+	AdditionalProperties map[string]interface{} `json:"-"`
+}
+
+// Meta_Note defines model for Meta.Note.
+type Meta_Note struct {
+	AdditionalProperties map[string]interface{} `json:"-"`
+}
+
+// Meta_Priority defines model for Meta.Priority.
+type Meta_Priority struct {
+	AdditionalProperties map[string]interface{} `json:"-"`
+}
+
+// Meta_Pulsar defines model for Meta.Pulsar.
+type Meta_Pulsar struct {
+	AdditionalProperties map[string]interface{} `json:"-"`
+}
+
+// Meta_Requests defines model for Meta.Requests.
+type Meta_Requests struct {
+	AdditionalProperties map[string]interface{} `json:"-"`
+}
+
+// Meta_Up defines model for Meta.Up.
+type Meta_Up struct {
+	AdditionalProperties map[string]interface{} `json:"-"`
+}
+
+// Meta_UsState defines model for Meta.UsState.
+type Meta_UsState struct {
+	AdditionalProperties map[string]interface{} `json:"-"`
+}
+
+// Meta_Weight defines model for Meta.Weight.
+type Meta_Weight struct {
+	AdditionalProperties map[string]interface{} `json:"-"`
+}
+
+// Record defines model for Record.
+type Record struct {
+	Answers         []Answer                `json:"answers"`
+	Domain          string                  `json:"domain"`
+	Filters         []Filter                `json:"filters"`
+	Id              *string                 `json:"id,omitempty"`
+	Link            *string                 `json:"link,omitempty"`
+	Meta            *Meta                   `json:"meta,omitempty"`
+	Regions         *map[string]interface{} `json:"regions,omitempty"`
+	Ttl             *int                    `json:"ttl,omitempty"`
+	Type            string                  `json:"type"`
+	UseClientSubnet *bool                   `json:"use_client_subnet,omitempty"`
+	Zone            string                  `json:"zone"`
+}
+
+// Region defines model for Region.
+type Region struct {
+	Meta *Meta `json:"meta,omitempty"`
+}
+
+// TSIG defines model for TSIG.
+type TSIG struct {
+	Enabled *bool   `json:"enabled,omitempty"`
+	Hash    *string `json:"hash,omitempty"`
+	Key     *string `json:"key,omitempty"`
+	Name    *string `json:"name,omitempty"`
 }
 
 // ZoneObject defines model for ZoneObject.
 type ZoneObject struct {
-	DnsServers *[]string               `json:"dns_servers,omitempty"`
-	Hostmaster *string                 `json:"hostmaster,omitempty"`
-	Id         *string                 `json:"id,omitempty"`
-	Meta       *map[string]interface{} `json:"meta,omitempty"`
-	MxTtl      *int                    `json:"mx_ttl,omitempty"`
-	Refresh    *int                    `json:"refresh,omitempty"`
-	Retry      *int                    `json:"retry,omitempty"`
-	Ttl        *int                    `json:"ttl,omitempty"`
-	Zone       string                  `json:"zone"`
+	DnsServers   *[]string      `json:"dns_servers,omitempty"`
+	Dnssec       *bool          `json:"dnssec,omitempty"`
+	Expiry       *int           `json:"expiry,omitempty"`
+	Hostmaster   *string        `json:"hostmaster,omitempty"`
+	Id           *string        `json:"id,omitempty"`
+	Link         *string        `json:"link,omitempty"`
+	Meta         *Meta          `json:"meta,omitempty"`
+	NetworkPools *[]string      `json:"network_pools,omitempty"`
+	Networks     *[]int         `json:"networks,omitempty"`
+	NxTtl        *int           `json:"nx_ttl,omitempty"`
+	Pool         *string        `json:"pool,omitempty"`
+	Primary      *ZonePrimary   `json:"primary,omitempty"`
+	Records      *[]ZoneRecord  `json:"records,omitempty"`
+	Refresh      *int           `json:"refresh,omitempty"`
+	Retry        *int           `json:"retry,omitempty"`
+	Secondary    *ZoneSecondary `json:"secondary,omitempty"`
+	Serial       *int           `json:"serial,omitempty"`
+	Ttl          *int           `json:"ttl,omitempty"`
+	Zone         *string        `json:"zone,omitempty"`
+}
+
+// ZonePrimary defines model for ZonePrimary.
+type ZonePrimary struct {
+	Enabled     bool                  `json:"enabled"`
+	Secondaries []ZoneSecondaryServer `json:"secondaries"`
+}
+
+// ZoneRecord defines model for ZoneRecord.
+type ZoneRecord struct {
+	Domain       *string   `json:"Domain,omitempty"`
+	Id           *string   `json:"id,omitempty"`
+	Link         *string   `json:"link,omitempty"`
+	ShortAnswers *[]string `json:"short_answers,omitempty"`
+	Tier         *string   `json:"tier,omitempty"`
+	Ttl          *int      `json:"ttl,omitempty"`
+	Type         *string   `json:"type,omitempty"`
+}
+
+// ZoneSecondary defines model for ZoneSecondary.
+type ZoneSecondary struct {
+	Enabled     bool      `json:"enabled"`
+	Error       string    `json:"error"`
+	Expired     *bool     `json:"expired,omitempty"`
+	LastXfr     *int      `json:"last_xfr,omitempty"`
+	OtherIps    *[]string `json:"other_ips,omitempty"`
+	OtherPorts  *[]int    `json:"other_ports,omitempty"`
+	PrimaryIp   *string   `json:"primary_ip,omitempty"`
+	PrimaryPort *int      `json:"primary_port,omitempty"`
+	Status      *string   `json:"status,omitempty"`
+	Tsig        *TSIG     `json:"tsig,omitempty"`
+}
+
+// ZoneSecondaryServer defines model for ZoneSecondaryServer.
+type ZoneSecondaryServer struct {
+	Ip       string `json:"ip"`
+	Networks *[]int `json:"networks,omitempty"`
+	Notify   bool   `json:"notify"`
+	Port     *int   `json:"port,omitempty"`
 }
 
 // Domain defines model for domain.
@@ -64,6 +250,960 @@ type RecordType string
 
 // Zone defines model for zone.
 type Zone string
+
+// Getter for additional properties for Meta_Asn. Returns the specified
+// element and whether it was found
+func (a Meta_Asn) Get(fieldName string) (value interface{}, found bool) {
+	if a.AdditionalProperties != nil {
+		value, found = a.AdditionalProperties[fieldName]
+	}
+	return
+}
+
+// Setter for additional properties for Meta_Asn
+func (a *Meta_Asn) Set(fieldName string, value interface{}) {
+	if a.AdditionalProperties == nil {
+		a.AdditionalProperties = make(map[string]interface{})
+	}
+	a.AdditionalProperties[fieldName] = value
+}
+
+// Override default JSON handling for Meta_Asn to handle AdditionalProperties
+func (a *Meta_Asn) UnmarshalJSON(b []byte) error {
+	object := make(map[string]json.RawMessage)
+	err := json.Unmarshal(b, &object)
+	if err != nil {
+		return err
+	}
+
+	if len(object) != 0 {
+		a.AdditionalProperties = make(map[string]interface{})
+		for fieldName, fieldBuf := range object {
+			var fieldVal interface{}
+			err := json.Unmarshal(fieldBuf, &fieldVal)
+			if err != nil {
+				return errors.Wrap(err, fmt.Sprintf("error unmarshaling field %s", fieldName))
+			}
+			a.AdditionalProperties[fieldName] = fieldVal
+		}
+	}
+	return nil
+}
+
+// Override default JSON handling for Meta_Asn to handle AdditionalProperties
+func (a Meta_Asn) MarshalJSON() ([]byte, error) {
+	var err error
+	object := make(map[string]json.RawMessage)
+
+	for fieldName, field := range a.AdditionalProperties {
+		object[fieldName], err = json.Marshal(field)
+		if err != nil {
+			return nil, errors.Wrap(err, fmt.Sprintf("error marshaling '%s'", fieldName))
+		}
+	}
+	return json.Marshal(object)
+}
+
+// Getter for additional properties for Meta_CaProvince. Returns the specified
+// element and whether it was found
+func (a Meta_CaProvince) Get(fieldName string) (value interface{}, found bool) {
+	if a.AdditionalProperties != nil {
+		value, found = a.AdditionalProperties[fieldName]
+	}
+	return
+}
+
+// Setter for additional properties for Meta_CaProvince
+func (a *Meta_CaProvince) Set(fieldName string, value interface{}) {
+	if a.AdditionalProperties == nil {
+		a.AdditionalProperties = make(map[string]interface{})
+	}
+	a.AdditionalProperties[fieldName] = value
+}
+
+// Override default JSON handling for Meta_CaProvince to handle AdditionalProperties
+func (a *Meta_CaProvince) UnmarshalJSON(b []byte) error {
+	object := make(map[string]json.RawMessage)
+	err := json.Unmarshal(b, &object)
+	if err != nil {
+		return err
+	}
+
+	if len(object) != 0 {
+		a.AdditionalProperties = make(map[string]interface{})
+		for fieldName, fieldBuf := range object {
+			var fieldVal interface{}
+			err := json.Unmarshal(fieldBuf, &fieldVal)
+			if err != nil {
+				return errors.Wrap(err, fmt.Sprintf("error unmarshaling field %s", fieldName))
+			}
+			a.AdditionalProperties[fieldName] = fieldVal
+		}
+	}
+	return nil
+}
+
+// Override default JSON handling for Meta_CaProvince to handle AdditionalProperties
+func (a Meta_CaProvince) MarshalJSON() ([]byte, error) {
+	var err error
+	object := make(map[string]json.RawMessage)
+
+	for fieldName, field := range a.AdditionalProperties {
+		object[fieldName], err = json.Marshal(field)
+		if err != nil {
+			return nil, errors.Wrap(err, fmt.Sprintf("error marshaling '%s'", fieldName))
+		}
+	}
+	return json.Marshal(object)
+}
+
+// Getter for additional properties for Meta_Connections. Returns the specified
+// element and whether it was found
+func (a Meta_Connections) Get(fieldName string) (value interface{}, found bool) {
+	if a.AdditionalProperties != nil {
+		value, found = a.AdditionalProperties[fieldName]
+	}
+	return
+}
+
+// Setter for additional properties for Meta_Connections
+func (a *Meta_Connections) Set(fieldName string, value interface{}) {
+	if a.AdditionalProperties == nil {
+		a.AdditionalProperties = make(map[string]interface{})
+	}
+	a.AdditionalProperties[fieldName] = value
+}
+
+// Override default JSON handling for Meta_Connections to handle AdditionalProperties
+func (a *Meta_Connections) UnmarshalJSON(b []byte) error {
+	object := make(map[string]json.RawMessage)
+	err := json.Unmarshal(b, &object)
+	if err != nil {
+		return err
+	}
+
+	if len(object) != 0 {
+		a.AdditionalProperties = make(map[string]interface{})
+		for fieldName, fieldBuf := range object {
+			var fieldVal interface{}
+			err := json.Unmarshal(fieldBuf, &fieldVal)
+			if err != nil {
+				return errors.Wrap(err, fmt.Sprintf("error unmarshaling field %s", fieldName))
+			}
+			a.AdditionalProperties[fieldName] = fieldVal
+		}
+	}
+	return nil
+}
+
+// Override default JSON handling for Meta_Connections to handle AdditionalProperties
+func (a Meta_Connections) MarshalJSON() ([]byte, error) {
+	var err error
+	object := make(map[string]json.RawMessage)
+
+	for fieldName, field := range a.AdditionalProperties {
+		object[fieldName], err = json.Marshal(field)
+		if err != nil {
+			return nil, errors.Wrap(err, fmt.Sprintf("error marshaling '%s'", fieldName))
+		}
+	}
+	return json.Marshal(object)
+}
+
+// Getter for additional properties for Meta_Country. Returns the specified
+// element and whether it was found
+func (a Meta_Country) Get(fieldName string) (value interface{}, found bool) {
+	if a.AdditionalProperties != nil {
+		value, found = a.AdditionalProperties[fieldName]
+	}
+	return
+}
+
+// Setter for additional properties for Meta_Country
+func (a *Meta_Country) Set(fieldName string, value interface{}) {
+	if a.AdditionalProperties == nil {
+		a.AdditionalProperties = make(map[string]interface{})
+	}
+	a.AdditionalProperties[fieldName] = value
+}
+
+// Override default JSON handling for Meta_Country to handle AdditionalProperties
+func (a *Meta_Country) UnmarshalJSON(b []byte) error {
+	object := make(map[string]json.RawMessage)
+	err := json.Unmarshal(b, &object)
+	if err != nil {
+		return err
+	}
+
+	if len(object) != 0 {
+		a.AdditionalProperties = make(map[string]interface{})
+		for fieldName, fieldBuf := range object {
+			var fieldVal interface{}
+			err := json.Unmarshal(fieldBuf, &fieldVal)
+			if err != nil {
+				return errors.Wrap(err, fmt.Sprintf("error unmarshaling field %s", fieldName))
+			}
+			a.AdditionalProperties[fieldName] = fieldVal
+		}
+	}
+	return nil
+}
+
+// Override default JSON handling for Meta_Country to handle AdditionalProperties
+func (a Meta_Country) MarshalJSON() ([]byte, error) {
+	var err error
+	object := make(map[string]json.RawMessage)
+
+	for fieldName, field := range a.AdditionalProperties {
+		object[fieldName], err = json.Marshal(field)
+		if err != nil {
+			return nil, errors.Wrap(err, fmt.Sprintf("error marshaling '%s'", fieldName))
+		}
+	}
+	return json.Marshal(object)
+}
+
+// Getter for additional properties for Meta_Georegion. Returns the specified
+// element and whether it was found
+func (a Meta_Georegion) Get(fieldName string) (value interface{}, found bool) {
+	if a.AdditionalProperties != nil {
+		value, found = a.AdditionalProperties[fieldName]
+	}
+	return
+}
+
+// Setter for additional properties for Meta_Georegion
+func (a *Meta_Georegion) Set(fieldName string, value interface{}) {
+	if a.AdditionalProperties == nil {
+		a.AdditionalProperties = make(map[string]interface{})
+	}
+	a.AdditionalProperties[fieldName] = value
+}
+
+// Override default JSON handling for Meta_Georegion to handle AdditionalProperties
+func (a *Meta_Georegion) UnmarshalJSON(b []byte) error {
+	object := make(map[string]json.RawMessage)
+	err := json.Unmarshal(b, &object)
+	if err != nil {
+		return err
+	}
+
+	if len(object) != 0 {
+		a.AdditionalProperties = make(map[string]interface{})
+		for fieldName, fieldBuf := range object {
+			var fieldVal interface{}
+			err := json.Unmarshal(fieldBuf, &fieldVal)
+			if err != nil {
+				return errors.Wrap(err, fmt.Sprintf("error unmarshaling field %s", fieldName))
+			}
+			a.AdditionalProperties[fieldName] = fieldVal
+		}
+	}
+	return nil
+}
+
+// Override default JSON handling for Meta_Georegion to handle AdditionalProperties
+func (a Meta_Georegion) MarshalJSON() ([]byte, error) {
+	var err error
+	object := make(map[string]json.RawMessage)
+
+	for fieldName, field := range a.AdditionalProperties {
+		object[fieldName], err = json.Marshal(field)
+		if err != nil {
+			return nil, errors.Wrap(err, fmt.Sprintf("error marshaling '%s'", fieldName))
+		}
+	}
+	return json.Marshal(object)
+}
+
+// Getter for additional properties for Meta_HighWatermark. Returns the specified
+// element and whether it was found
+func (a Meta_HighWatermark) Get(fieldName string) (value interface{}, found bool) {
+	if a.AdditionalProperties != nil {
+		value, found = a.AdditionalProperties[fieldName]
+	}
+	return
+}
+
+// Setter for additional properties for Meta_HighWatermark
+func (a *Meta_HighWatermark) Set(fieldName string, value interface{}) {
+	if a.AdditionalProperties == nil {
+		a.AdditionalProperties = make(map[string]interface{})
+	}
+	a.AdditionalProperties[fieldName] = value
+}
+
+// Override default JSON handling for Meta_HighWatermark to handle AdditionalProperties
+func (a *Meta_HighWatermark) UnmarshalJSON(b []byte) error {
+	object := make(map[string]json.RawMessage)
+	err := json.Unmarshal(b, &object)
+	if err != nil {
+		return err
+	}
+
+	if len(object) != 0 {
+		a.AdditionalProperties = make(map[string]interface{})
+		for fieldName, fieldBuf := range object {
+			var fieldVal interface{}
+			err := json.Unmarshal(fieldBuf, &fieldVal)
+			if err != nil {
+				return errors.Wrap(err, fmt.Sprintf("error unmarshaling field %s", fieldName))
+			}
+			a.AdditionalProperties[fieldName] = fieldVal
+		}
+	}
+	return nil
+}
+
+// Override default JSON handling for Meta_HighWatermark to handle AdditionalProperties
+func (a Meta_HighWatermark) MarshalJSON() ([]byte, error) {
+	var err error
+	object := make(map[string]json.RawMessage)
+
+	for fieldName, field := range a.AdditionalProperties {
+		object[fieldName], err = json.Marshal(field)
+		if err != nil {
+			return nil, errors.Wrap(err, fmt.Sprintf("error marshaling '%s'", fieldName))
+		}
+	}
+	return json.Marshal(object)
+}
+
+// Getter for additional properties for Meta_IpPrefixes. Returns the specified
+// element and whether it was found
+func (a Meta_IpPrefixes) Get(fieldName string) (value interface{}, found bool) {
+	if a.AdditionalProperties != nil {
+		value, found = a.AdditionalProperties[fieldName]
+	}
+	return
+}
+
+// Setter for additional properties for Meta_IpPrefixes
+func (a *Meta_IpPrefixes) Set(fieldName string, value interface{}) {
+	if a.AdditionalProperties == nil {
+		a.AdditionalProperties = make(map[string]interface{})
+	}
+	a.AdditionalProperties[fieldName] = value
+}
+
+// Override default JSON handling for Meta_IpPrefixes to handle AdditionalProperties
+func (a *Meta_IpPrefixes) UnmarshalJSON(b []byte) error {
+	object := make(map[string]json.RawMessage)
+	err := json.Unmarshal(b, &object)
+	if err != nil {
+		return err
+	}
+
+	if len(object) != 0 {
+		a.AdditionalProperties = make(map[string]interface{})
+		for fieldName, fieldBuf := range object {
+			var fieldVal interface{}
+			err := json.Unmarshal(fieldBuf, &fieldVal)
+			if err != nil {
+				return errors.Wrap(err, fmt.Sprintf("error unmarshaling field %s", fieldName))
+			}
+			a.AdditionalProperties[fieldName] = fieldVal
+		}
+	}
+	return nil
+}
+
+// Override default JSON handling for Meta_IpPrefixes to handle AdditionalProperties
+func (a Meta_IpPrefixes) MarshalJSON() ([]byte, error) {
+	var err error
+	object := make(map[string]json.RawMessage)
+
+	for fieldName, field := range a.AdditionalProperties {
+		object[fieldName], err = json.Marshal(field)
+		if err != nil {
+			return nil, errors.Wrap(err, fmt.Sprintf("error marshaling '%s'", fieldName))
+		}
+	}
+	return json.Marshal(object)
+}
+
+// Getter for additional properties for Meta_Latitude. Returns the specified
+// element and whether it was found
+func (a Meta_Latitude) Get(fieldName string) (value interface{}, found bool) {
+	if a.AdditionalProperties != nil {
+		value, found = a.AdditionalProperties[fieldName]
+	}
+	return
+}
+
+// Setter for additional properties for Meta_Latitude
+func (a *Meta_Latitude) Set(fieldName string, value interface{}) {
+	if a.AdditionalProperties == nil {
+		a.AdditionalProperties = make(map[string]interface{})
+	}
+	a.AdditionalProperties[fieldName] = value
+}
+
+// Override default JSON handling for Meta_Latitude to handle AdditionalProperties
+func (a *Meta_Latitude) UnmarshalJSON(b []byte) error {
+	object := make(map[string]json.RawMessage)
+	err := json.Unmarshal(b, &object)
+	if err != nil {
+		return err
+	}
+
+	if len(object) != 0 {
+		a.AdditionalProperties = make(map[string]interface{})
+		for fieldName, fieldBuf := range object {
+			var fieldVal interface{}
+			err := json.Unmarshal(fieldBuf, &fieldVal)
+			if err != nil {
+				return errors.Wrap(err, fmt.Sprintf("error unmarshaling field %s", fieldName))
+			}
+			a.AdditionalProperties[fieldName] = fieldVal
+		}
+	}
+	return nil
+}
+
+// Override default JSON handling for Meta_Latitude to handle AdditionalProperties
+func (a Meta_Latitude) MarshalJSON() ([]byte, error) {
+	var err error
+	object := make(map[string]json.RawMessage)
+
+	for fieldName, field := range a.AdditionalProperties {
+		object[fieldName], err = json.Marshal(field)
+		if err != nil {
+			return nil, errors.Wrap(err, fmt.Sprintf("error marshaling '%s'", fieldName))
+		}
+	}
+	return json.Marshal(object)
+}
+
+// Getter for additional properties for Meta_Loadavg. Returns the specified
+// element and whether it was found
+func (a Meta_Loadavg) Get(fieldName string) (value interface{}, found bool) {
+	if a.AdditionalProperties != nil {
+		value, found = a.AdditionalProperties[fieldName]
+	}
+	return
+}
+
+// Setter for additional properties for Meta_Loadavg
+func (a *Meta_Loadavg) Set(fieldName string, value interface{}) {
+	if a.AdditionalProperties == nil {
+		a.AdditionalProperties = make(map[string]interface{})
+	}
+	a.AdditionalProperties[fieldName] = value
+}
+
+// Override default JSON handling for Meta_Loadavg to handle AdditionalProperties
+func (a *Meta_Loadavg) UnmarshalJSON(b []byte) error {
+	object := make(map[string]json.RawMessage)
+	err := json.Unmarshal(b, &object)
+	if err != nil {
+		return err
+	}
+
+	if len(object) != 0 {
+		a.AdditionalProperties = make(map[string]interface{})
+		for fieldName, fieldBuf := range object {
+			var fieldVal interface{}
+			err := json.Unmarshal(fieldBuf, &fieldVal)
+			if err != nil {
+				return errors.Wrap(err, fmt.Sprintf("error unmarshaling field %s", fieldName))
+			}
+			a.AdditionalProperties[fieldName] = fieldVal
+		}
+	}
+	return nil
+}
+
+// Override default JSON handling for Meta_Loadavg to handle AdditionalProperties
+func (a Meta_Loadavg) MarshalJSON() ([]byte, error) {
+	var err error
+	object := make(map[string]json.RawMessage)
+
+	for fieldName, field := range a.AdditionalProperties {
+		object[fieldName], err = json.Marshal(field)
+		if err != nil {
+			return nil, errors.Wrap(err, fmt.Sprintf("error marshaling '%s'", fieldName))
+		}
+	}
+	return json.Marshal(object)
+}
+
+// Getter for additional properties for Meta_Longitude. Returns the specified
+// element and whether it was found
+func (a Meta_Longitude) Get(fieldName string) (value interface{}, found bool) {
+	if a.AdditionalProperties != nil {
+		value, found = a.AdditionalProperties[fieldName]
+	}
+	return
+}
+
+// Setter for additional properties for Meta_Longitude
+func (a *Meta_Longitude) Set(fieldName string, value interface{}) {
+	if a.AdditionalProperties == nil {
+		a.AdditionalProperties = make(map[string]interface{})
+	}
+	a.AdditionalProperties[fieldName] = value
+}
+
+// Override default JSON handling for Meta_Longitude to handle AdditionalProperties
+func (a *Meta_Longitude) UnmarshalJSON(b []byte) error {
+	object := make(map[string]json.RawMessage)
+	err := json.Unmarshal(b, &object)
+	if err != nil {
+		return err
+	}
+
+	if len(object) != 0 {
+		a.AdditionalProperties = make(map[string]interface{})
+		for fieldName, fieldBuf := range object {
+			var fieldVal interface{}
+			err := json.Unmarshal(fieldBuf, &fieldVal)
+			if err != nil {
+				return errors.Wrap(err, fmt.Sprintf("error unmarshaling field %s", fieldName))
+			}
+			a.AdditionalProperties[fieldName] = fieldVal
+		}
+	}
+	return nil
+}
+
+// Override default JSON handling for Meta_Longitude to handle AdditionalProperties
+func (a Meta_Longitude) MarshalJSON() ([]byte, error) {
+	var err error
+	object := make(map[string]json.RawMessage)
+
+	for fieldName, field := range a.AdditionalProperties {
+		object[fieldName], err = json.Marshal(field)
+		if err != nil {
+			return nil, errors.Wrap(err, fmt.Sprintf("error marshaling '%s'", fieldName))
+		}
+	}
+	return json.Marshal(object)
+}
+
+// Getter for additional properties for Meta_LowWatermark. Returns the specified
+// element and whether it was found
+func (a Meta_LowWatermark) Get(fieldName string) (value interface{}, found bool) {
+	if a.AdditionalProperties != nil {
+		value, found = a.AdditionalProperties[fieldName]
+	}
+	return
+}
+
+// Setter for additional properties for Meta_LowWatermark
+func (a *Meta_LowWatermark) Set(fieldName string, value interface{}) {
+	if a.AdditionalProperties == nil {
+		a.AdditionalProperties = make(map[string]interface{})
+	}
+	a.AdditionalProperties[fieldName] = value
+}
+
+// Override default JSON handling for Meta_LowWatermark to handle AdditionalProperties
+func (a *Meta_LowWatermark) UnmarshalJSON(b []byte) error {
+	object := make(map[string]json.RawMessage)
+	err := json.Unmarshal(b, &object)
+	if err != nil {
+		return err
+	}
+
+	if len(object) != 0 {
+		a.AdditionalProperties = make(map[string]interface{})
+		for fieldName, fieldBuf := range object {
+			var fieldVal interface{}
+			err := json.Unmarshal(fieldBuf, &fieldVal)
+			if err != nil {
+				return errors.Wrap(err, fmt.Sprintf("error unmarshaling field %s", fieldName))
+			}
+			a.AdditionalProperties[fieldName] = fieldVal
+		}
+	}
+	return nil
+}
+
+// Override default JSON handling for Meta_LowWatermark to handle AdditionalProperties
+func (a Meta_LowWatermark) MarshalJSON() ([]byte, error) {
+	var err error
+	object := make(map[string]json.RawMessage)
+
+	for fieldName, field := range a.AdditionalProperties {
+		object[fieldName], err = json.Marshal(field)
+		if err != nil {
+			return nil, errors.Wrap(err, fmt.Sprintf("error marshaling '%s'", fieldName))
+		}
+	}
+	return json.Marshal(object)
+}
+
+// Getter for additional properties for Meta_Note. Returns the specified
+// element and whether it was found
+func (a Meta_Note) Get(fieldName string) (value interface{}, found bool) {
+	if a.AdditionalProperties != nil {
+		value, found = a.AdditionalProperties[fieldName]
+	}
+	return
+}
+
+// Setter for additional properties for Meta_Note
+func (a *Meta_Note) Set(fieldName string, value interface{}) {
+	if a.AdditionalProperties == nil {
+		a.AdditionalProperties = make(map[string]interface{})
+	}
+	a.AdditionalProperties[fieldName] = value
+}
+
+// Override default JSON handling for Meta_Note to handle AdditionalProperties
+func (a *Meta_Note) UnmarshalJSON(b []byte) error {
+	object := make(map[string]json.RawMessage)
+	err := json.Unmarshal(b, &object)
+	if err != nil {
+		return err
+	}
+
+	if len(object) != 0 {
+		a.AdditionalProperties = make(map[string]interface{})
+		for fieldName, fieldBuf := range object {
+			var fieldVal interface{}
+			err := json.Unmarshal(fieldBuf, &fieldVal)
+			if err != nil {
+				return errors.Wrap(err, fmt.Sprintf("error unmarshaling field %s", fieldName))
+			}
+			a.AdditionalProperties[fieldName] = fieldVal
+		}
+	}
+	return nil
+}
+
+// Override default JSON handling for Meta_Note to handle AdditionalProperties
+func (a Meta_Note) MarshalJSON() ([]byte, error) {
+	var err error
+	object := make(map[string]json.RawMessage)
+
+	for fieldName, field := range a.AdditionalProperties {
+		object[fieldName], err = json.Marshal(field)
+		if err != nil {
+			return nil, errors.Wrap(err, fmt.Sprintf("error marshaling '%s'", fieldName))
+		}
+	}
+	return json.Marshal(object)
+}
+
+// Getter for additional properties for Meta_Priority. Returns the specified
+// element and whether it was found
+func (a Meta_Priority) Get(fieldName string) (value interface{}, found bool) {
+	if a.AdditionalProperties != nil {
+		value, found = a.AdditionalProperties[fieldName]
+	}
+	return
+}
+
+// Setter for additional properties for Meta_Priority
+func (a *Meta_Priority) Set(fieldName string, value interface{}) {
+	if a.AdditionalProperties == nil {
+		a.AdditionalProperties = make(map[string]interface{})
+	}
+	a.AdditionalProperties[fieldName] = value
+}
+
+// Override default JSON handling for Meta_Priority to handle AdditionalProperties
+func (a *Meta_Priority) UnmarshalJSON(b []byte) error {
+	object := make(map[string]json.RawMessage)
+	err := json.Unmarshal(b, &object)
+	if err != nil {
+		return err
+	}
+
+	if len(object) != 0 {
+		a.AdditionalProperties = make(map[string]interface{})
+		for fieldName, fieldBuf := range object {
+			var fieldVal interface{}
+			err := json.Unmarshal(fieldBuf, &fieldVal)
+			if err != nil {
+				return errors.Wrap(err, fmt.Sprintf("error unmarshaling field %s", fieldName))
+			}
+			a.AdditionalProperties[fieldName] = fieldVal
+		}
+	}
+	return nil
+}
+
+// Override default JSON handling for Meta_Priority to handle AdditionalProperties
+func (a Meta_Priority) MarshalJSON() ([]byte, error) {
+	var err error
+	object := make(map[string]json.RawMessage)
+
+	for fieldName, field := range a.AdditionalProperties {
+		object[fieldName], err = json.Marshal(field)
+		if err != nil {
+			return nil, errors.Wrap(err, fmt.Sprintf("error marshaling '%s'", fieldName))
+		}
+	}
+	return json.Marshal(object)
+}
+
+// Getter for additional properties for Meta_Pulsar. Returns the specified
+// element and whether it was found
+func (a Meta_Pulsar) Get(fieldName string) (value interface{}, found bool) {
+	if a.AdditionalProperties != nil {
+		value, found = a.AdditionalProperties[fieldName]
+	}
+	return
+}
+
+// Setter for additional properties for Meta_Pulsar
+func (a *Meta_Pulsar) Set(fieldName string, value interface{}) {
+	if a.AdditionalProperties == nil {
+		a.AdditionalProperties = make(map[string]interface{})
+	}
+	a.AdditionalProperties[fieldName] = value
+}
+
+// Override default JSON handling for Meta_Pulsar to handle AdditionalProperties
+func (a *Meta_Pulsar) UnmarshalJSON(b []byte) error {
+	object := make(map[string]json.RawMessage)
+	err := json.Unmarshal(b, &object)
+	if err != nil {
+		return err
+	}
+
+	if len(object) != 0 {
+		a.AdditionalProperties = make(map[string]interface{})
+		for fieldName, fieldBuf := range object {
+			var fieldVal interface{}
+			err := json.Unmarshal(fieldBuf, &fieldVal)
+			if err != nil {
+				return errors.Wrap(err, fmt.Sprintf("error unmarshaling field %s", fieldName))
+			}
+			a.AdditionalProperties[fieldName] = fieldVal
+		}
+	}
+	return nil
+}
+
+// Override default JSON handling for Meta_Pulsar to handle AdditionalProperties
+func (a Meta_Pulsar) MarshalJSON() ([]byte, error) {
+	var err error
+	object := make(map[string]json.RawMessage)
+
+	for fieldName, field := range a.AdditionalProperties {
+		object[fieldName], err = json.Marshal(field)
+		if err != nil {
+			return nil, errors.Wrap(err, fmt.Sprintf("error marshaling '%s'", fieldName))
+		}
+	}
+	return json.Marshal(object)
+}
+
+// Getter for additional properties for Meta_Requests. Returns the specified
+// element and whether it was found
+func (a Meta_Requests) Get(fieldName string) (value interface{}, found bool) {
+	if a.AdditionalProperties != nil {
+		value, found = a.AdditionalProperties[fieldName]
+	}
+	return
+}
+
+// Setter for additional properties for Meta_Requests
+func (a *Meta_Requests) Set(fieldName string, value interface{}) {
+	if a.AdditionalProperties == nil {
+		a.AdditionalProperties = make(map[string]interface{})
+	}
+	a.AdditionalProperties[fieldName] = value
+}
+
+// Override default JSON handling for Meta_Requests to handle AdditionalProperties
+func (a *Meta_Requests) UnmarshalJSON(b []byte) error {
+	object := make(map[string]json.RawMessage)
+	err := json.Unmarshal(b, &object)
+	if err != nil {
+		return err
+	}
+
+	if len(object) != 0 {
+		a.AdditionalProperties = make(map[string]interface{})
+		for fieldName, fieldBuf := range object {
+			var fieldVal interface{}
+			err := json.Unmarshal(fieldBuf, &fieldVal)
+			if err != nil {
+				return errors.Wrap(err, fmt.Sprintf("error unmarshaling field %s", fieldName))
+			}
+			a.AdditionalProperties[fieldName] = fieldVal
+		}
+	}
+	return nil
+}
+
+// Override default JSON handling for Meta_Requests to handle AdditionalProperties
+func (a Meta_Requests) MarshalJSON() ([]byte, error) {
+	var err error
+	object := make(map[string]json.RawMessage)
+
+	for fieldName, field := range a.AdditionalProperties {
+		object[fieldName], err = json.Marshal(field)
+		if err != nil {
+			return nil, errors.Wrap(err, fmt.Sprintf("error marshaling '%s'", fieldName))
+		}
+	}
+	return json.Marshal(object)
+}
+
+// Getter for additional properties for Meta_Up. Returns the specified
+// element and whether it was found
+func (a Meta_Up) Get(fieldName string) (value interface{}, found bool) {
+	if a.AdditionalProperties != nil {
+		value, found = a.AdditionalProperties[fieldName]
+	}
+	return
+}
+
+// Setter for additional properties for Meta_Up
+func (a *Meta_Up) Set(fieldName string, value interface{}) {
+	if a.AdditionalProperties == nil {
+		a.AdditionalProperties = make(map[string]interface{})
+	}
+	a.AdditionalProperties[fieldName] = value
+}
+
+// Override default JSON handling for Meta_Up to handle AdditionalProperties
+func (a *Meta_Up) UnmarshalJSON(b []byte) error {
+	object := make(map[string]json.RawMessage)
+	err := json.Unmarshal(b, &object)
+	if err != nil {
+		return err
+	}
+
+	if len(object) != 0 {
+		a.AdditionalProperties = make(map[string]interface{})
+		for fieldName, fieldBuf := range object {
+			var fieldVal interface{}
+			err := json.Unmarshal(fieldBuf, &fieldVal)
+			if err != nil {
+				return errors.Wrap(err, fmt.Sprintf("error unmarshaling field %s", fieldName))
+			}
+			a.AdditionalProperties[fieldName] = fieldVal
+		}
+	}
+	return nil
+}
+
+// Override default JSON handling for Meta_Up to handle AdditionalProperties
+func (a Meta_Up) MarshalJSON() ([]byte, error) {
+	var err error
+	object := make(map[string]json.RawMessage)
+
+	for fieldName, field := range a.AdditionalProperties {
+		object[fieldName], err = json.Marshal(field)
+		if err != nil {
+			return nil, errors.Wrap(err, fmt.Sprintf("error marshaling '%s'", fieldName))
+		}
+	}
+	return json.Marshal(object)
+}
+
+// Getter for additional properties for Meta_UsState. Returns the specified
+// element and whether it was found
+func (a Meta_UsState) Get(fieldName string) (value interface{}, found bool) {
+	if a.AdditionalProperties != nil {
+		value, found = a.AdditionalProperties[fieldName]
+	}
+	return
+}
+
+// Setter for additional properties for Meta_UsState
+func (a *Meta_UsState) Set(fieldName string, value interface{}) {
+	if a.AdditionalProperties == nil {
+		a.AdditionalProperties = make(map[string]interface{})
+	}
+	a.AdditionalProperties[fieldName] = value
+}
+
+// Override default JSON handling for Meta_UsState to handle AdditionalProperties
+func (a *Meta_UsState) UnmarshalJSON(b []byte) error {
+	object := make(map[string]json.RawMessage)
+	err := json.Unmarshal(b, &object)
+	if err != nil {
+		return err
+	}
+
+	if len(object) != 0 {
+		a.AdditionalProperties = make(map[string]interface{})
+		for fieldName, fieldBuf := range object {
+			var fieldVal interface{}
+			err := json.Unmarshal(fieldBuf, &fieldVal)
+			if err != nil {
+				return errors.Wrap(err, fmt.Sprintf("error unmarshaling field %s", fieldName))
+			}
+			a.AdditionalProperties[fieldName] = fieldVal
+		}
+	}
+	return nil
+}
+
+// Override default JSON handling for Meta_UsState to handle AdditionalProperties
+func (a Meta_UsState) MarshalJSON() ([]byte, error) {
+	var err error
+	object := make(map[string]json.RawMessage)
+
+	for fieldName, field := range a.AdditionalProperties {
+		object[fieldName], err = json.Marshal(field)
+		if err != nil {
+			return nil, errors.Wrap(err, fmt.Sprintf("error marshaling '%s'", fieldName))
+		}
+	}
+	return json.Marshal(object)
+}
+
+// Getter for additional properties for Meta_Weight. Returns the specified
+// element and whether it was found
+func (a Meta_Weight) Get(fieldName string) (value interface{}, found bool) {
+	if a.AdditionalProperties != nil {
+		value, found = a.AdditionalProperties[fieldName]
+	}
+	return
+}
+
+// Setter for additional properties for Meta_Weight
+func (a *Meta_Weight) Set(fieldName string, value interface{}) {
+	if a.AdditionalProperties == nil {
+		a.AdditionalProperties = make(map[string]interface{})
+	}
+	a.AdditionalProperties[fieldName] = value
+}
+
+// Override default JSON handling for Meta_Weight to handle AdditionalProperties
+func (a *Meta_Weight) UnmarshalJSON(b []byte) error {
+	object := make(map[string]json.RawMessage)
+	err := json.Unmarshal(b, &object)
+	if err != nil {
+		return err
+	}
+
+	if len(object) != 0 {
+		a.AdditionalProperties = make(map[string]interface{})
+		for fieldName, fieldBuf := range object {
+			var fieldVal interface{}
+			err := json.Unmarshal(fieldBuf, &fieldVal)
+			if err != nil {
+				return errors.Wrap(err, fmt.Sprintf("error unmarshaling field %s", fieldName))
+			}
+			a.AdditionalProperties[fieldName] = fieldVal
+		}
+	}
+	return nil
+}
+
+// Override default JSON handling for Meta_Weight to handle AdditionalProperties
+func (a Meta_Weight) MarshalJSON() ([]byte, error) {
+	var err error
+	object := make(map[string]json.RawMessage)
+
+	for fieldName, field := range a.AdditionalProperties {
+		object[fieldName], err = json.Marshal(field)
+		if err != nil {
+			return nil, errors.Wrap(err, fmt.Sprintf("error marshaling '%s'", fieldName))
+		}
+	}
+	return json.Marshal(object)
+}
 
 // RequestEditorFn  is the function signature for the RequestEditor callback function
 type RequestEditorFn func(req *http.Request, ctx context.Context) error
@@ -99,8 +1239,8 @@ type ClientInterface interface {
 	// GetDomain request
 	GetDomain(ctx context.Context, zone Zone, domain Domain, recordType RecordType) (*http.Response, error)
 
-	// CreateDomain request
-	CreateDomain(ctx context.Context, zone Zone, domain Domain, recordType RecordType) (*http.Response, error)
+	// CreateDomain request  with any body
+	CreateDomainWithBody(ctx context.Context, zone Zone, domain Domain, recordType RecordType, contentType string, body io.Reader) (*http.Response, error)
 }
 
 func (c *Client) GetZones(ctx context.Context) (*http.Response, error) {
@@ -178,8 +1318,8 @@ func (c *Client) GetDomain(ctx context.Context, zone Zone, domain Domain, record
 	return c.Client.Do(req)
 }
 
-func (c *Client) CreateDomain(ctx context.Context, zone Zone, domain Domain, recordType RecordType) (*http.Response, error) {
-	req, err := NewCreateDomainRequest(c.Server, zone, domain, recordType)
+func (c *Client) CreateDomainWithBody(ctx context.Context, zone Zone, domain Domain, recordType RecordType, contentType string, body io.Reader) (*http.Response, error) {
+	req, err := NewCreateDomainRequestWithBody(c.Server, zone, domain, recordType, contentType, body)
 	if err != nil {
 		return nil, err
 	}
@@ -306,8 +1446,8 @@ func NewGetDomainRequest(server string, zone Zone, domain Domain, recordType Rec
 	return req, nil
 }
 
-// NewCreateDomainRequest generates requests for CreateDomain
-func NewCreateDomainRequest(server string, zone Zone, domain Domain, recordType RecordType) (*http.Request, error) {
+// NewCreateDomainRequestWithBody generates requests for CreateDomain with any type of body
+func NewCreateDomainRequestWithBody(server string, zone Zone, domain Domain, recordType RecordType, contentType string, body io.Reader) (*http.Request, error) {
 	var err error
 
 	var pathParam0 string
@@ -333,11 +1473,12 @@ func NewCreateDomainRequest(server string, zone Zone, domain Domain, recordType 
 
 	queryUrl := fmt.Sprintf("%s/zones/%s/%s/%s", server, pathParam0, pathParam1, pathParam2)
 
-	req, err := http.NewRequest("PUT", queryUrl, nil)
+	req, err := http.NewRequest("PUT", queryUrl, body)
 	if err != nil {
 		return nil, err
 	}
 
+	req.Header.Add("Content-Type", contentType)
 	return req, nil
 }
 
@@ -414,7 +1555,7 @@ type getZoneResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
 	JSON200      *ZoneObject
-	JSON404      *map[string]interface{}
+	JSON404      *Error
 }
 
 // Status returns HTTPResponse.Status
@@ -458,6 +1599,8 @@ func (r createZoneResponse) StatusCode() int {
 type getDomainResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
+	JSON200      *Record
+	JSON404      *Error
 }
 
 // Status returns HTTPResponse.Status
@@ -542,9 +1685,9 @@ func (c *ClientWithResponses) GetDomainWithResponse(ctx context.Context, zone Zo
 	return ParsegetDomainResponse(rsp)
 }
 
-// CreateDomainWithResponse request returning *CreateDomainResponse
-func (c *ClientWithResponses) CreateDomainWithResponse(ctx context.Context, zone Zone, domain Domain, recordType RecordType) (*createDomainResponse, error) {
-	rsp, err := c.CreateDomain(ctx, zone, domain, recordType)
+// CreateDomainWithBodyWithResponse request with arbitrary body returning *CreateDomainResponse
+func (c *ClientWithResponses) CreateDomainWithBodyWithResponse(ctx context.Context, zone Zone, domain Domain, recordType RecordType, contentType string, body io.Reader) (*createDomainResponse, error) {
+	rsp, err := c.CreateDomainWithBody(ctx, zone, domain, recordType, contentType, body)
 	if err != nil {
 		return nil, err
 	}
@@ -616,7 +1759,7 @@ func ParsegetZoneResponse(rsp *http.Response) (*getZoneResponse, error) {
 		}
 
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
-		response.JSON404 = &map[string]interface{}{}
+		response.JSON404 = &Error{}
 		if err := json.Unmarshal(bodyBytes, response.JSON404); err != nil {
 			return nil, err
 		}
@@ -665,6 +1808,18 @@ func ParsegetDomainResponse(rsp *http.Response) (*getDomainResponse, error) {
 	}
 
 	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		response.JSON200 = &Record{}
+		if err := json.Unmarshal(bodyBytes, response.JSON200); err != nil {
+			return nil, err
+		}
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
+		response.JSON404 = &Error{}
+		if err := json.Unmarshal(bodyBytes, response.JSON404); err != nil {
+			return nil, err
+		}
+
 	}
 
 	return response, nil
@@ -850,19 +2005,28 @@ func RegisterHandlers(router runtime.EchoRouter, si ServerInterface) {
 // Base64 encoded, gzipped, json marshaled Swagger object
 var swaggerSpec = []string{
 
-	"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",
+	"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",
+	"q+0aAAA=",
 }
 
 // GetSwagger returns the Swagger specification corresponding to the generated code

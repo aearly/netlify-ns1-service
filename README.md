@@ -13,5 +13,5 @@ Created as an interview project for Netlify.
 - [ ] Also save zones/records in a sql database
     + [ ] https://github.com/Masterminds/squirrel
     + [ ] https://github.com/mattn/go-sqlite3
-- [ ] Create a UI for the api - likely CLI
-    + [ ] Use OAPI definition to generate a client
+- [ ] ~Create a UI for the api - likely CLI~
+    + [ ] ~Use OAPI definition to generate a client~

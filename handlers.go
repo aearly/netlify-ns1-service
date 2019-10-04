@@ -1,12 +1,22 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
 	. "github.com/aearly/netlify-ns1-service/openapi"
+	"github.com/alecthomas/jsonschema"
 	"github.com/labstack/echo/v4"
 	"gopkg.in/ns1/ns1-go.v2/rest/model/dns"
+	"gopkg.in/ns1/ns1-go.v2/rest/model/filter"
 	"net/http"
+	"os"
 )
+
+func main2() {
+	schema := jsonschema.Reflect(&dns.Record{})
+	result, _ := json.MarshalIndent(schema, "", "  ")
+	os.Stdout.Write(result)
+}
 
 type Handlers struct {
 	apiKey string
@@ -33,7 +43,7 @@ func (h Handlers) CreateZone(ctx echo.Context, zoneName Zone) error {
 	zone := new(dns.Zone)
 
 	if err := ctx.Bind(zone); err != nil {
-		return ctx.String(http.StatusBadRequest, "")
+		return ctx.JSON(http.StatusBadRequest, ErrorMessage{Message: err.Error()})
 	}
 
 	zone.Zone = string(zoneName)
@@ -74,10 +84,39 @@ func (h Handlers) GetZone(ctx echo.Context, zoneName Zone) error {
 
 // get full info about a domain record// (GET /zones/{zone}/{domain}/{recordType})
 func (h Handlers) GetDomain(ctx echo.Context, zoneName Zone, domain Domain, recordType RecordType) error {
-	return nil
+	client := ctx.(*CustomContext).Ns1Client
+
+	record, res, err := client.Records.Get(string(zoneName), string(domain), string(recordType))
+
+	if res.StatusCode == 404 {
+		return ctx.JSON(http.StatusNotFound, ErrorMessage{Message: err.Error()})
+	}
+	if err != nil {
+		return ctx.JSON(http.StatusInternalServerError, ErrorMessage{Message: err.Error()})
+	}
+	return ctx.JSON(http.StatusOK, record)
 }
 
-// create a new domain record// (PUT /zones/{zone}/{domian}/{recordType})
+// create a new domain record// (PUT /zones/{zone}/{domain}/{recordType})
 func (h Handlers) CreateDomain(ctx echo.Context, zoneName Zone, domain Domain, recordType RecordType) error {
-	return nil
+	client := ctx.(*CustomContext).Ns1Client
+
+	record := new(dns.Record)
+
+	if err := ctx.Bind(record); err != nil {
+		return ctx.JSON(http.StatusBadRequest, ErrorMessage{Message: err.Error()})
+	}
+
+	record.Zone = string(zoneName)
+	record.Domain = string(domain)
+	record.Type = string(recordType)
+	if record.Filters == nil {
+		record.Filters = []*filter.Filter{}
+	}
+
+	_, err := client.Records.Create(record)
+	if err != nil {
+		return ctx.JSON(http.StatusInternalServerError, ErrorMessage{Message: err.Error()})
+	}
+	return ctx.JSON(http.StatusCreated, struct{}{})
 }

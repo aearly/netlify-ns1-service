@@ -39,7 +39,7 @@ paths:
           content:
             application/json:
               schema:
-                type: object
+                $ref: '#/components/schemas/Error'
     put:
       summary: create a new zone
       operationId: createZone
@@ -61,7 +61,7 @@ paths:
       parameters:
         - $ref: '#/components/parameters/zone'
       responses:
-        "201":
+        "204":
           description: zone deleted
 
 
@@ -73,9 +73,25 @@ paths:
         - $ref: '#/components/parameters/zone'
         - $ref: '#/components/parameters/domain'
         - $ref: '#/components/parameters/recordType'
+      responses:
+        "200":
+          description: OK, return domain record info
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Record'
+        "404":
+          description: Zone info not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
     put:
       summary: create a new domain record
       operationId: createDomain
+      requestBody:
+        schema:
+          $ref: '#/components/schemas/ZoneObject'
       parameters:
         - $ref: '#/components/parameters/zone'
         - $ref: '#/components/parameters/domain'
@@ -83,75 +99,363 @@ paths:
 
 components:
   schemas:
-    ZoneObject:
+    Error:
       type: object
-      required: ['zone']
       properties:
+        message:
+          type: string
+    # Schemas generated from NS1 client structs
+    # Zone Types
+    Meta:
+      properties:
+        asn:
+          additionalProperties: true
+          type: object
+        ca_province:
+          additionalProperties: true
+          type: object
+        connections:
+          additionalProperties: true
+          type: object
+        country:
+          additionalProperties: true
+          type: object
+        georegion:
+          additionalProperties: true
+          type: object
+        high_watermark:
+          additionalProperties: true
+          type: object
+        ip_prefixes:
+          additionalProperties: true
+          type: object
+        latitude:
+          additionalProperties: true
+          type: object
+        loadavg:
+          additionalProperties: true
+          type: object
+        longitude:
+          additionalProperties: true
+          type: object
+        low_watermark:
+          additionalProperties: true
+          type: object
+        note:
+          additionalProperties: true
+          type: object
+        priority:
+          additionalProperties: true
+          type: object
+        pulsar:
+          additionalProperties: true
+          type: object
+        requests:
+          additionalProperties: true
+          type: object
+        up:
+          additionalProperties: true
+          type: object
+        us_state:
+          additionalProperties: true
+          type: object
+        weight:
+          additionalProperties: true
+          type: object
+      additionalProperties: false
+      type: object
+    TSIG:
+      properties:
+        enabled:
+          type: boolean
+        hash:
+          type: string
+        key:
+          type: string
+        name:
+          type: string
+      additionalProperties: false
+      type: object
+    ZoneObject:
+      properties:
+        dns_servers:
+          items:
+            type: string
+          type: array
+        dnssec:
+          type: boolean
+        expiry:
+          type: integer
+        hostmaster:
+          type: string
         id:
           type: string
-        ttl:
+        link:
+          type: string
+        meta:
+          "$schema": http://json-schema.org/draft-04/schema#
+          "$ref": "#/components/schemas/Meta"
+        network_pools:
+          items:
+            type: string
+          type: array
+        networks:
+          items:
+            type: integer
+          type: array
+        nx_ttl:
           type: integer
-          default: 3600
-        mx_ttl:
+        pool:
+          type: string
+        primary:
+          "$schema": http://json-schema.org/draft-04/schema#
+          "$ref": "#/components/schemas/ZonePrimary"
+        records:
+          items:
+            "$schema": http://json-schema.org/draft-04/schema#
+            "$ref": "#/components/schemas/ZoneRecord"
+          type: array
+        refresh:
           type: integer
         retry:
           type: integer
+        secondary:
+          "$schema": http://json-schema.org/draft-04/schema#
+          "$ref": "#/components/schemas/ZoneSecondary"
+        serial:
+          type: integer
+        ttl:
+          type: integer
         zone:
           type: string
-        refresh:
-          type: integer
-        dns_servers:
-          type: array
-          items:
-            type: string
-        meta:
-          type: object
-        hostmaster:
-          type: string
-
-    DomainObject:
+      additionalProperties: false
       type: object
+    ZonePrimary:
+      required:
+      - enabled
+      - secondaries
       properties:
+        enabled:
+          type: boolean
+        secondaries:
+          items:
+            "$schema": http://json-schema.org/draft-04/schema#
+            "$ref": "#/components/schemas/ZoneSecondaryServer"
+          type: array
+      additionalProperties: false
+      type: object
+    ZoneRecord:
+      properties:
+        Domain:
+          type: string
         id:
           type: string
-        tier:
-          type: integer
-        domain:
+        link:
           type: string
-        zone:
+        short_answers:
+          items:
+            type: string
+          type: array
+        tier:
+          type: string
+        ttl:
+          type: integer
+        type:
+          type: string
+      additionalProperties: false
+      type: object
+    ZoneSecondary:
+      required:
+      - error
+      - enabled
+      properties:
+        enabled:
+          type: boolean
+        error:
+          type: string
+        expired:
+          type: boolean
+        last_xfr:
+          type: integer
+        other_ips:
+          items:
+            type: string
+          type: array
+        other_ports:
+          items:
+            type: integer
+          type: array
+        primary_ip:
+          type: string
+        primary_port:
+          type: integer
+        status:
+          type: string
+        tsig:
+          "$schema": http://json-schema.org/draft-04/schema#
+          "$ref": "#/components/schemas/TSIG"
+      additionalProperties: false
+      type: object
+    ZoneSecondaryServer:
+      required:
+      - ip
+      - notify
+      properties:
+        ip:
+          type: string
+        networks:
+          items:
+            type: integer
+          type: array
+        notify:
+          type: boolean
+        port:
+          type: integer
+      additionalProperties: false
+      type: object
+
+    # Record types
+    Answer:
+      required:
+      - answer
+      properties:
+        answer:
+          items:
+            type: string
+          type: array
+        id:
           type: string
         meta:
+          "$ref": "#/components/schemas/Meta"
+        region:
+          type: string
+      additionalProperties: false
+      type: object
+    Filter:
+      required:
+      - filter
+      - config
+      properties:
+        config:
+          # patternProperties:
+          #   ".*":
+          #     additionalProperties: true
+          #     type: object
+          type: object
+        disabled:
+          type: boolean
+        filter:
+          type: string
+      additionalProperties: false
+      type: object
+    Meta:
+      properties:
+        asn:
+          additionalProperties: true
+          type: object
+        ca_province:
+          additionalProperties: true
+          type: object
+        connections:
+          additionalProperties: true
+          type: object
+        country:
+          additionalProperties: true
+          type: object
+        georegion:
+          additionalProperties: true
+          type: object
+        high_watermark:
+          additionalProperties: true
+          type: object
+        ip_prefixes:
+          additionalProperties: true
+          type: object
+        latitude:
+          additionalProperties: true
+          type: object
+        loadavg:
+          additionalProperties: true
+          type: object
+        longitude:
+          additionalProperties: true
+          type: object
+        low_watermark:
+          additionalProperties: true
+          type: object
+        note:
+          additionalProperties: true
+          type: object
+        priority:
+          additionalProperties: true
+          type: object
+        pulsar:
+          additionalProperties: true
+          type: object
+        requests:
+          additionalProperties: true
+          type: object
+        up:
+          additionalProperties: true
+          type: object
+        us_state:
+          additionalProperties: true
+          type: object
+        weight:
+          additionalProperties: true
+          type: object
+      additionalProperties: false
+      type: object
+    Record:
+      required:
+      - zone
+      - domain
+      - type
+      - answers
+      - filters
+      properties:
+        answers:
+          items:
+            "$schema": http://json-schema.org/draft-04/schema#
+            "$ref": "#/components/schemas/Answer"
+          type: array
+        domain:
+          type: string
+        filters:
+          items:
+            "$schema": http://json-schema.org/draft-04/schema#
+            "$ref": "#/components/schemas/Filter"
+          type: array
+        id:
+          type: string
+        link:
+          type: string
+        meta:
+          "$schema": http://json-schema.org/draft-04/schema#
+          "$ref": "#/components/schemas/Meta"
+        regions:
+          # patternProperties:
+          #   ".*":
+          #     "$schema": http://json-schema.org/draft-04/schema#
+          #     "$ref": "#/components/schemas/Region"
           type: object
         ttl:
           type: integer
-        answers:
-          type: array
-          items:
-            $ref: '#/components/schemas/AnswerObject'
-
-    AnswerObject:
-      type: object
-      properties:
-        id:
-          type: string
         type:
           type: string
-          enum: ["NS", "A", "AAA", "CNAME"]
-        feeds:
-          type: object
-          properties:
-            source:
-              type: string
-            feed:
-              type: string
-        answer:
-          type: array
-          items:
-            type: string
-        meta:
-          type: object
-        region:
+        use_client_subnet:
+          type: boolean
+        zone:
           type: string
+      additionalProperties: false
+      type: object
+    Region:
+      properties:
+        meta:
+          "$ref": "#/components/schemas/Meta"
+      additionalProperties: false
+      type: object
+
 
   parameters:
     zone:
